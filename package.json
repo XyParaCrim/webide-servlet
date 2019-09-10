@@ -1,7 +1,8 @@
 {
   "name": "webide-servlet",
   "version": "1.0.0",
-  "dependencies": {
-    
+  "dependencies": {},
+  "devDependencies": {
+    "socket.io-client": "^2.2.0"
   }
 }
