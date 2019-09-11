@@ -12,6 +12,7 @@ class Provider extends EventEmitter {
   constructor() {
     super()
     this.alive = false
+    this.poison = false
   }
 
   /**
@@ -20,6 +21,23 @@ class Provider extends EventEmitter {
    * @return {Provider}
    */
   static create(options) {
+    utils.unSupportedHandler()
+  }
+
+  /**
+   * 通用工厂方法 - 实例un-alive
+   * @param options
+   * @return {Provider}
+   */
+  static createLazy(options) {
+    utils.unSupportedHandler()
+  }
+
+  /**
+   * 返回解析provider options的parser
+   * @return {Parser}
+   */
+  static parser() {
     utils.unSupportedHandler()
   }
 }

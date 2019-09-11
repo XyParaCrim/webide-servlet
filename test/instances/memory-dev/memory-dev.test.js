@@ -1,5 +1,5 @@
 const WebideServlet = require('../../../index')
-const MemoryServlet = require('../../../instances/memory-dev/index')
+const MemoryServlet = require('../../../packages/memory/memory-servlet')
 
 describe('memory-dev', () => {
 
@@ -11,7 +11,9 @@ describe('memory-dev', () => {
 
   // 测试加载memory-dev
   test('load memory-servlet instance of memory-dev', () => {
-    WebideServlet.load('memory-dev')
+    //expect.assertions(2);
+
+    return WebideServlet.load('memory-dev')
       .then(servlet => {
         // 测试生产的实例是否正确
         expect(servlet).toBeInstanceOf(MemoryServlet)
@@ -19,12 +21,7 @@ describe('memory-dev', () => {
 
         // 测试Api
 
-
       })
-      .catch(e =>
-        // 不期望抛出错误
-        expect(e).toBeUndefined()
-      )
   })
 })
 

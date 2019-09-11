@@ -7,17 +7,20 @@ const Debug = require('debug')
 
 const debug = Debug('webide-servlet:memory-provider')
 const DefaultParser = {
-  port(options) {
-    return options.port
-  },
-  socketOptions(options) {
-    return options.socketIO
-  },
-  id(productOptions) {
+  id: function (productOptions) {
     return productOptions.id
   },
   type(productOptions) {
     return productOptions.type
+  },
+  port(options) {
+    return options.port
+  },
+  namespace(options) {
+    return options.id + '#' + options.type
+  },
+  socketOptions(options) {
+    return options.socketIO
   },
   simpleCheckProductOptions() {}
 }
@@ -30,16 +33,33 @@ function normalizeReqData(reqData, provider) {
 
 class MemoryProvider extends Provider {
 
+  /**
+   * @see core/provider$create
+   */
   static create(options) {
     let provider = new MemoryProvider(options)
     provider._start()
     return provider
   }
 
+  /**
+   * @see core/provider$createLazy
+   */
+  static createLazy(options) {
+    return new MemoryProvider(options)
+  }
+
+  /**
+   * @see core/provider$parser
+   */
+  static parser() {
+    return DefaultParser
+  }
+
   constructor (options) {
     super()
     this.options = options
-    this.parser = DefaultParser
+    // this.parser = this.constructor.parser()
     this._setUp()
   }
 
@@ -48,8 +68,8 @@ class MemoryProvider extends Provider {
   }
 
   _start() {
+    const parser = MemoryProvider.parser()
     const options = this.options
-    const parser = this.parser
 
     let port = parser.port(options)
     let optionsOfSocketIO = parser.socketOptions(options)
@@ -72,8 +92,8 @@ class MemoryProvider extends Provider {
   _onConnect(socket) {
     debug('a socket(%s) is connected, binding events', socket.id)
 
+    const parser = MemoryProvider.parser()
     const options = this.options
-    const parser = this.parser
 
     let type = parser.type(options)
 
@@ -87,6 +107,7 @@ class MemoryProvider extends Provider {
       normalizeReqData(reqData)
 
       let event = reqData.event
+      let timeout = reqData.timeout
       let callbackId = reqData.callbackId
       if (this.listenerCount(event) > 0) {
         // 沿用webide实现，所以显得部分事件分发显得多余
@@ -97,9 +118,9 @@ class MemoryProvider extends Provider {
 
         // timeout，统一注销此次callback
         setTimeout(() => {
-          this.off(reqData.callbackId, callback)
+          this.off(callbackId, callback)
           debug('unregister callback(%s)', event + '#' + callback)
-        })
+        }, timeout)
       } else {
         // 如果没有此event事件则被当作此次通信错误
         callback({

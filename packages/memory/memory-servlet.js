@@ -3,28 +3,23 @@ const MemoryProduct = require('./memory-product')
 const MemoryProvider = require('./memory-provider')
 const utils = require('../../core/utils')
 const Debug = require('debug')
+const path = require('path')
 
 const debug = Debug('webide-servlet:memory-servlet')
-const DEFAULT_PRODUCTS_FILE = "products.json"
-
-const P = {
-  id(productOptions) {
-    return productOptions.id
-  },
-  type(productOptions) {
-    return productOptions.type
-  },
-  simpleCheckProductOptions() {}
+const defaultParser = {
+  path(options) {
+    return path.resolve(options.cwd, options.filename)
+  }
 }
 
 class MemoryServlet extends Servlet {
-  constructor() {
+  constructor(options) {
     super()
 
     this.name = "memory-servlet"
     this.alive = true // always true
-    this.parser = P
-    this.productOptionMap = {}
+    this.options = options
+    this.parser = defaultParser
     this.providerMap = {}
     this._attach()
   }
@@ -34,24 +29,48 @@ class MemoryServlet extends Servlet {
    * @private
    */
   _attach () {
-    debug("load products file(%s)", DEFAULT_PRODUCTS_FILE)
-    utils.loadFile(DEFAULT_PRODUCTS_FILE)
+    const options = this.options
+    const parser = this.parser
+
+    let path = parser.path(options)
+
+    debug("loading products file(%s)", path)
+
+    utils.loadFile(path)
       // 解析数组配置，每一项配置初始化一个product
-      .then(productConfig => utils.resolveIteratorValues(productConfig).forEach(options => this._addProductOptions(options)))
-      .catch(error => utils.handleServletError(this, error, `Unable to retrieves products caused by loading file{${DEFAULT_PRODUCTS_FILE} failed`))
+      .then(productConfig => utils.resolveIteratorValues(productConfig).forEach(options => this._addLazyProvider(options)))
+      .catch(error => utils.handleServletError(this, error, `Unable to retrieves products caused by loading file{${path} failed`))
   }
 
   /**
-   * 记录product options
+   * 通过product-options创建lazy provider
    * @param {Object} productOptions
    * @private
    */
-  _addProductOptions(productOptions) {
-    const parser = this.parser
-    const optionMap = this.productOptionMap
-    if (parser.simpleCheckProductOptions(productOptions)) {
-      let type = parser.type(productOptions);
-      (optionMap[type] || (optionMap[type] = Array.of())).push(productOptions)
+  _addLazyProvider(productOptions) {
+    const providerFactory = this.providerFactory()
+    const providerParser = providerFactory.parser()
+    const providerMap = this.providerMap
+
+    let namespace = providerParser.namespace(productOptions)
+    let provider = providerMap[namespace]
+    if (provider && provider.alive) {
+      // 首先处理此namespace下已存在的provider
+      // 原则上，如果alive，则旧的优先，反之，则旧的优先
+      utils.handleServletWarn(this, `A product{${namespace}} is dropped caused by existed`)
+    } else {
+      // un-alive -> replace
+      debug('creating lazy provider(%s)', namespace)
+
+      provider = providerFactory.createLazy(productOptions)
+
+      // check 这个返回的provider是否完好无损的，若是poison则drop it, 维持原provider options
+      if (provider.poison) {
+        debug('creating lazy provider(%s) failed', namespace)
+      } else {
+        debug('creating lazy provider(%s) done', namespace)
+        providerMap[namespace] = provider
+      }
     }
   }
 
@@ -68,7 +87,6 @@ class MemoryServlet extends Servlet {
   }
 
   provide(options) {
-    const parser = this.parser
     const providerMap = this.providerMap
     const optionMap = this.productOptionMap
     const providerFactory = this.providerFactory()
