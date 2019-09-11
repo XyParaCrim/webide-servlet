@@ -1,10 +1,9 @@
-import Servlet from '../../core/servlet'
-import MemoryProduct from './memory-product'
-import MemoryProvider from './memory-provider'
-import * as utils from '../../core/utils'
+const Servlet = require('../../core/servlet')
+const MemoryProduct = require('./memory-product')
+const MemoryProvider = require('./memory-provider')
+const utils = require('../../core/utils')
 
 const DEFAULT_PRODUCTS_FILE = "products.json"
-
 
 class MemoryServlet extends Servlet {
 
@@ -70,3 +69,5 @@ class MemoryServlet extends Servlet {
     return super.provide(registerOptions)
   }
 }
+
+module.exports = MemoryServlet

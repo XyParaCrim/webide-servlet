@@ -1,9 +1,8 @@
 /**
  * 用于与provider交互
  */
-import EventEmitter from 'events'
-import * as utils from '../core/utils'
-
+const EventEmitter = require('events').EventEmitter
+const utils = require('../core/utils')
 
 /**
  * 1. 提供基本的emitter能力
@@ -22,4 +21,4 @@ class Product extends EventEmitter {
   }
 }
 
-export default Product
+module.exports = Product

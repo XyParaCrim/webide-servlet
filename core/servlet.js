@@ -2,9 +2,9 @@
  * 服务中心，可以获取到product，provider，etc实例，实现方式
  * 可以远程注册中心或者内存储存
  */
-import * as utils from './utils'
-import Product from './product'
-import Provider from './provider'
+const utils = require('./utils')
+const Product = require('./product')
+const Provider = require('./provider')
 
 class Servlet {
   static Product = Product
@@ -43,4 +43,4 @@ class Servlet {
   }
 }
 
-export default Servlet
+module.exports = Servlet

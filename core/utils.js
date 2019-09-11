@@ -1,17 +1,20 @@
-export const EmptyArray = Object.freeze([])
+module.exports = {
+  EmptyArray: Object.freeze([]),
 
-export function unSupportedHandler() {
-  throw Error() // TODO
+  unSupportedHandler() {
+    throw Error() // TODO
+  },
+
+  loadFile() {
+
+  },
+
+  resolveIteratorValues(iterator) {
+    return Object.values(iterator)
+  },
+
+  handleServletError(servlet, error, message) {
+
+  }
 }
 
-export function loadFile() {
-
-}
-
-export function resolveIteratorValues(iterator) {
-  return Object.values(iterator)
-}
-
-export function handleServletError(servlet, error, message) {
-
-}

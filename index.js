@@ -1,5 +1,5 @@
-import fs from 'fs'
-import path from 'path'
+const fs = require('fs')
+const path = require('path')
 
 function getInstancesDir () {
   return path.resolve(__dirname, `./instances/`)
@@ -9,7 +9,7 @@ function getInstancePath(instancesDir, instanceName) {
   return instancesDir + '/' + instanceName + 'index.js'
 }
 
-export default {
+module.exports = {
   load(name) {
     const instancesDir = getInstancesDir()
     const instancePath = getInstancePath(instancesDir, name)

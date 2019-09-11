@@ -1,1 +1,1 @@
-import Product from "../../core/product"
+const Product = require('../../core/product')
