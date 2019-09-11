@@ -27,10 +27,10 @@ class Servlet {
 
   /**
    * 注册product，返回一个provider实例
-   * @param registerOptions
+   * @param options
    * @return {Servlet.Provider}
    */
-  provide (registerOptions) {
+  provide (options) {
     utils.unSupportedHandler()
   }
 
@@ -38,7 +38,7 @@ class Servlet {
     return this.constructor.Product
   }
 
-  provideFactory() {
+  providerFactory() {
     return this.constructor.Provider
   }
 }
