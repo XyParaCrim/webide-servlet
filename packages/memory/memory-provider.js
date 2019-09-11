@@ -1,5 +1,5 @@
 /**
- * socket.io implement
+ * socket.io implementation
  */
 const Provider = require("../../core/provider")
 const io = require("socket.io")
@@ -57,6 +57,7 @@ class MemoryProvider extends Provider {
 
     debug('starting socket-io server(%s)', port)
 
+    // TODO 不是有效绑定
     this.alive = this.io.connected
 
     // 此事件挂在namespace上，namespace只有一个connection事件
@@ -69,6 +70,8 @@ class MemoryProvider extends Provider {
    * @private
    */
   _onConnect(socket) {
+    debug('a socket(%s) is connected, binding events', socket.id)
+
     const options = this.options
     const parser = this.parser
 

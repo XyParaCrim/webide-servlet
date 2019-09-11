@@ -6,22 +6,31 @@ function getInstancesDir () {
 }
 
 function getInstancePath(instancesDir, instanceName) {
-  return instancesDir + '/' + instanceName + 'index.js'
+  return instancesDir + '/' + instanceName + '/' + 'index.js'
 }
 
 module.exports = {
   load(name) {
+    // resolve 创建函数路径
     const instancesDir = getInstancesDir()
-    const instancePath = getInstancePath(instancesDir, name)
+    const createFnPath = getInstancePath(instancesDir, name)
 
     return new Promise((resolve, reject) => {
-      fs.access(instancePath, fs.constants.F_OK, err => {
+      // check 文件是否存在
+      fs.access(createFnPath, fs.constants.F_OK, err => {
         if (err) {
           return reject(err)
         }
 
-        const ServletConstructor = require(instancePath)
-        resolve(new ServletConstructor())
+        let servlet
+        try {
+          // 默认/instances/${name}/index.js 提供的时创建servlet实例的函数
+          servlet = require(createFnPath).call()
+        } catch (e) {
+          reject(e)
+        }
+
+        resolve(servlet)
       })
     })
   }

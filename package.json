@@ -5,7 +5,14 @@
     "debug": "latest"
   },
   "devDependencies": {
+    "babel-core": "^6.26.3",
+    "babel-jest": "^24.9.0",
+    "babel-preset-env": "^1.7.0",
+    "jest": "^24.9.0",
     "socket.io": "^2.2.0",
     "socket.io-client": "^2.2.0"
+  },
+  "scripts": {
+    "test": "jest"
   }
 }

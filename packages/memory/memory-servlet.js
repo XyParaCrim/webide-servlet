@@ -18,10 +18,6 @@ const P = {
 }
 
 class MemoryServlet extends Servlet {
-
-  static Product = MemoryProduct
-  static Provider = MemoryProvider
-
   constructor() {
     super()
 
@@ -30,7 +26,6 @@ class MemoryServlet extends Servlet {
     this.parser = P
     this.productOptionMap = {}
     this.providerMap = {}
-
     this._attach()
   }
 
@@ -110,5 +105,8 @@ class MemoryServlet extends Servlet {
     return provider
   }
 }
+
+MemoryServlet.Provider = MemoryProvider
+MemoryServlet.Product = MemoryProduct
 
 module.exports = MemoryServlet

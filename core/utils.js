@@ -6,7 +6,7 @@ module.exports = {
   },
 
   loadFile() {
-
+    console.log(__dirname, __filename)
   },
 
   resolveIteratorValues(iterator) {

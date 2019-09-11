@@ -7,9 +7,6 @@ const Product = require('./product')
 const Provider = require('./provider')
 
 class Servlet {
-  static Product = Product
-  static Provider = Provider
-
   constructor () {
     this.alive = false
   }
@@ -42,5 +39,8 @@ class Servlet {
     return this.constructor.Provider
   }
 }
+
+Servlet.Product = Product
+Servlet.Provider = Provider
 
 module.exports = Servlet
