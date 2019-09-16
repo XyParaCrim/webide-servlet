@@ -2,7 +2,8 @@
   "name": "webide-servlet",
   "version": "1.0.0",
   "dependencies": {
-    "debug": "latest"
+    "debug": "latest",
+    "base64id": "latest"
   },
   "devDependencies": {
     "babel-core": "^6.26.3",

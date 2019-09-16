@@ -3,8 +3,10 @@
     "id": "aaa",
     "type": "v1",
     "port": 8080,
-    "socketIO": {}
-
+    "socket.io": {},
+    "client": {
+      "url": "http://localhost:8080"
+    }
   },
   {
     "id": "aa21",

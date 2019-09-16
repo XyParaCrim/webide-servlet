@@ -1,4 +1,5 @@
 const fs = require('fs')
+const base64id = require('base64id');
 const map = new Map()
 
 module.exports = {
@@ -7,6 +8,10 @@ module.exports = {
 
 
   EmptyArray: Object.freeze([]),
+
+  generateId() {
+    return base64id.generateId()
+  },
 
   unSupportedHandler() {
     throw Error() // TODO

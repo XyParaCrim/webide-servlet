@@ -26,7 +26,6 @@ describe('memory-dev', () => {
 
         // like protected
         expect(servlet.providerFactory()).toBe(MemoryServlet.Provider)
-        expect(servlet.productFactory()).toBe(MemoryServlet.Product)
 
         // public api
         // 获取一个attached provider in provide's side //does not exist
@@ -37,6 +36,12 @@ describe('memory-dev', () => {
         let existedProvider = servlet.provide({ "id": "aaa", "type": "v1" })
         expect(existedProvider.poison).toBeFalsy()
         expect(existedProvider).toBeInstanceOf(MemoryServlet.Provider)
+
+        // 测试 provider metadata
+        let metadata = existedProvider.metadata()
+        expect(metadata).not.toBeNull()
+        expect(metadata.url).toBe("http://localhost:8080")
+
 
         existedProvider.close()
       })

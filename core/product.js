@@ -11,19 +11,20 @@ const utils = require('../core/utils')
  */
 class Product extends EventEmitter {
 
-  constructor(provider) {
+  constructor(metadata) {
     super()
     this.poison = true
-    this.provider = provider
+    this.attacted = false
+    this.metadata = metadata
   }
 
   /**
    * 通用工厂方法
-   * @param {Provider} provider
+   * @param {Object} metadata
    * @return {Product}
    */
-  static create(provider) {
-    utils.unSupportedHandler()
+  static create(metadata) {
+    return utils.get('poison-provider')
   }
 }
 

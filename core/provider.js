@@ -29,11 +29,18 @@ class Provider extends EventEmitter {
   }
 
   /**
+   * 返回product的元
+   */
+  metadata() {
+    utils.unSupportedHandler()
+  }
+
+  /**
    * 返回一个与Provider交互的Product实例
    * @return {Provider.Product}
    */
   supply() {
-    utils.unSupportedHandler()
+    return this.productFactory().create(this.metadata())
   }
 
   productFactory() {

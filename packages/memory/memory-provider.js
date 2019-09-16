@@ -21,7 +21,10 @@ const DefaultParser = {
     return options.id + '#' + options.type
   },
   socketOptions(options) {
-    return options.socketIO
+    return options['socket.io']
+  },
+  metadata(options) {
+    return options['client']
   },
   simpleCheckProductOptions() {}
 }
@@ -107,13 +110,8 @@ class MemoryProvider extends Provider {
     }
   }
 
-
-  /**
-   * 返回socket.io-client实现的product
-   * @returns {Provider.Product}
-   */
-  supply() {
-    return this.productFactory().create(this)
+  metadata() {
+    return MemoryProvider.parser().metadata(this.options)
   }
 
   /**
@@ -164,6 +162,7 @@ class MemoryProvider extends Provider {
   }
 }
 
+// socket-io.client实现
 MemoryProvider.Product = MemoryProduct
 
 module.exports = MemoryProvider

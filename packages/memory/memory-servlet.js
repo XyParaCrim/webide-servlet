@@ -1,5 +1,4 @@
 const Servlet = require('../../core/servlet')
-const MemoryProduct = require('./memory-product')
 const MemoryProvider = require('./memory-provider')
 const utils = require('../../core/utils')
 const Debug = require('debug')
@@ -85,20 +84,24 @@ class MemoryServlet extends Servlet {
   }
 
   supply(filterOptions) {
+    return this.getProvider(filterOptions).supply()
+  }
+
+  metadata(filterOptions) {
+    return this.getProvider(filterOptions).metadata()
+  }
+
+  getProvider(filterOptions) {
     const providerMap = this.providerMap
     const providerParser = this.providerFactory().parser()
 
-    let provider, product, namespace
+    let provider, namespace
 
-    provider = providerMap[namespace = providerParser.namespace(filterOptions)]
-    if (provider) {
-      product = provider.supply()
-    } else {
-      product = utils.get('poison-provider')
-      utils.handleServletError(this, new TypeError('Unable to query products with no type')) // todo
-    }
+    provider = providerMap[namespace = providerParser.namespace(filterOptions)] || utils.get('poison-provider')
 
-    return  product
+    provider.poison && utils.handleServletError(this, new TypeError(`Unable to query{${namespace}} provider with no-matched options`))
+
+    return provider
   }
 
   /**

@@ -53,6 +53,14 @@ class Servlet {
     utils.unSupportedHandler()
   }
 
+  /**
+   * 根据提供的筛选条件，返回结果,且结果非空
+   * @param filterOptions
+   */
+  getProvider(filterOptions) {
+    utils.unSupportedHandler()
+  }
+
 
   providerFactory() {
     return this.constructor.Provider
