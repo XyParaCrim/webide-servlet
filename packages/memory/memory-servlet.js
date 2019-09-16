@@ -1,6 +1,7 @@
 const Servlet = require('../../core/servlet')
 const MemoryProvider = require('./memory-provider')
 const utils = require('../../core/utils')
+const io = require('../../core/io')
 const Debug = require('debug')
 const path = require('path')
 
@@ -37,8 +38,8 @@ class MemoryServlet extends Servlet {
 
       debug("loading products file(%s)", path)
 
-      utils.loadFile(path)
-      // 解析数组配置，每一项配置初始化一个product
+      io.loadFile(path)
+        // 解析数组配置，每一项配置初始化一个product
         .then(productConfig =>
           utils.resolveIteratorValues(productConfig).forEach(options => this._addLazyProvider(options))
         )
