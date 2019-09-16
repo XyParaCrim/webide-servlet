@@ -1,7 +1,10 @@
 [
   {
     "id": "aaa",
-    "type": "v1"
+    "type": "v1",
+    "port": 8080,
+    "socketIO": {}
+
   },
   {
     "id": "aa21",

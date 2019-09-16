@@ -25,12 +25,10 @@ module.exports = {
         let servlet
         try {
           // 默认/instances/${name}/index.js 提供的时创建servlet实例的函数
-          servlet = require(createFnPath).call()
+          (servlet = require(createFnPath).call()).attach(() => resolve(servlet))
         } catch (e) {
           reject(e)
         }
-
-        resolve(servlet)
       })
     })
   }

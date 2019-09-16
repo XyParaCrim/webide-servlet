@@ -2,6 +2,7 @@
  * socket.io implementation
  */
 const Provider = require("../../core/provider")
+const MemoryProduct = require('./memory-product')
 const io = require("socket.io")
 const Debug = require('debug')
 
@@ -38,7 +39,7 @@ class MemoryProvider extends Provider {
    */
   static create(options) {
     let provider = new MemoryProvider(options)
-    provider._start()
+    provider.attach()
     return provider
   }
 
@@ -58,30 +59,61 @@ class MemoryProvider extends Provider {
 
   constructor (options) {
     super()
+    this.alive = true // always true
+    this.poison = false
     this.options = options
+    this.server = null
     // this.parser = this.constructor.parser()
     this._setUp()
   }
 
+  /**
+   * 将一些事件方法绑上下文
+   * @private
+   */
   _setUp() {
     this._onConnect = this._onConnect.bind(this)
   }
 
-  _start() {
-    const parser = MemoryProvider.parser()
-    const options = this.options
+  /**
+   * @see Provider.attach
+   */
+  attach() {
+    if (!this.attached) {
+      const parser = MemoryProvider.parser()
+      const options = this.options
 
-    let port = parser.port(options)
-    let optionsOfSocketIO = parser.socketOptions(options)
-    let server = io(port, optionsOfSocketIO)
+      let port = parser.port(options)
+      let optionsOfSocketIO = parser.socketOptions(options)
+      let server = io(port, optionsOfSocketIO)
 
-    debug('starting socket-io server(%s)', port)
+      debug('starting socket-io server(%s)', port)
 
-    // TODO 不是有效绑定
-    this.alive = this.io.connected
+      // TODO 不是有效绑定
+      this.server = server
+      this.alive = this.attached = true
 
-    // 此事件挂在namespace上，namespace只有一个connection事件
-    server.on('connection', this._onConnect)
+      // 此事件挂在namespace上，namespace只有一个connection事件
+      server.on('connection', this._onConnect)
+    }
+  }
+
+  /**
+   * 关闭socket-io
+   */
+  close() {
+    if (this.attached && this.server) {
+      this.server.close()
+    }
+  }
+
+
+  /**
+   * 返回socket.io-client实现的product
+   * @returns {Provider.Product}
+   */
+  supply() {
+    return this.productFactory().create(this)
   }
 
   /**
@@ -131,5 +163,7 @@ class MemoryProvider extends Provider {
     })
   }
 }
+
+MemoryProvider.Product = MemoryProduct
 
 module.exports = MemoryProvider

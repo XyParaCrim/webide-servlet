@@ -1,6 +1,7 @@
 /**
  * 用于接收、处理product的交互
  */
+const Product = require('./product')
 const EventEmitter = require('events').EventEmitter
 const utils = require('../core/utils')
 
@@ -12,7 +13,31 @@ class Provider extends EventEmitter {
   constructor() {
     super()
     this.alive = false
-    this.poison = false
+    this.poison = true // 子类需要自己声明自己是否可用，默认不可用
+    this.attached = false
+  }
+
+  /**
+   * do provide
+   */
+  attach() {
+    utils.unSupportedHandler()
+  }
+
+  close() {
+    utils.unSupportedHandler()
+  }
+
+  /**
+   * 返回一个与Provider交互的Product实例
+   * @return {Provider.Product}
+   */
+  supply() {
+    utils.unSupportedHandler()
+  }
+
+  productFactory() {
+    return this.constructor.Product
   }
 
   /**
@@ -41,5 +66,9 @@ class Provider extends EventEmitter {
     utils.unSupportedHandler()
   }
 }
+
+Provider.Product = Product
+
+utils.set('poison-provider', new Provider())
 
 module.exports = Provider

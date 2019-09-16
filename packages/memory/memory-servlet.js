@@ -21,25 +21,35 @@ class MemoryServlet extends Servlet {
     this.options = options
     this.parser = defaultParser
     this.providerMap = {}
-    this._attach()
   }
 
   /**
-   * 默认加载本地配置文件
-   * @private
+   * 默认只是加载本地配置文件
+   * @param afterAttached
    */
-  _attach () {
-    const options = this.options
-    const parser = this.parser
+  attach (afterAttached) {
+    if (this.attached) {
+      utils.handleIfFunction(afterAttached)
+    } else {
+      const options = this.options
+      const parser = this.parser
 
-    let path = parser.path(options)
+      let path = parser.path(options)
 
-    debug("loading products file(%s)", path)
+      debug("loading products file(%s)", path)
 
-    utils.loadFile(path)
+      utils.loadFile(path)
       // 解析数组配置，每一项配置初始化一个product
-      .then(productConfig => utils.resolveIteratorValues(productConfig).forEach(options => this._addLazyProvider(options)))
-      .catch(error => utils.handleServletError(this, error, `Unable to retrieves products caused by loading file{${path} failed`))
+        .then(productConfig =>
+          utils.resolveIteratorValues(productConfig).forEach(options => this._addLazyProvider(options))
+        )
+        .catch(error =>
+          utils.handleServletError(this, error, `Unable to retrieves products caused by loading file{${path} failed`)
+        )
+        .finally(() =>
+          (this.attached = true) && utils.handleIfFunction(afterAttached)
+        )
+    }
   }
 
   /**
@@ -74,57 +84,52 @@ class MemoryServlet extends Servlet {
     }
   }
 
-  products(type, filterOptions) {
-    if (!type) {
-      throw new TypeError('Unable to query products with no type');
+  supply(filterOptions) {
+    const providerMap = this.providerMap
+    const providerParser = this.providerFactory().parser()
+
+    let provider, product, namespace
+
+    provider = providerMap[namespace = providerParser.namespace(filterOptions)]
+    if (provider) {
+      product = provider.supply()
+    } else {
+      product = utils.get('poison-provider')
+      utils.handleServletError(this, new TypeError('Unable to query products with no type')) // todo
     }
 
-    let productMap = this.productMap
-    let products = productMap[type] || Array.of()
-    if (filterOptions) { /* TODO */ }
-
-    return products
+    return  product
   }
 
+  /**
+   * for this implement, 可以获取的providers在{@see _attach}加载本地就已经决定了，
+   * 不存在动态添加新的provider
+   * @param options
+   * @returns {Servlet.Provider} 尝试返回一个attached的provider
+   */
   provide(options) {
     const providerMap = this.providerMap
-    const optionMap = this.productOptionMap
-    const providerFactory = this.providerFactory()
+    const providerParser = this.providerFactory().parser()
 
-    let id = parser.id(options)
-    let type = parser.type(options)
+    let namespace = providerParser.namespace(options)
+    let provider = providerMap[namespace] || utils.get('poison-provider')
 
-    // 首先，检查是否已经有同样的provider实例
-    let namespace = type + '#' + id
-    let provider = providerMap[namespace]
-    if (provider) {
-      // 检查是否已经失活，若失活则删除原实例，重新provide
-      return provider
-    }
-
-    // 其次，检查是否拥有相同namespace的配置，若有则认为此调用只是激活原配置，反之返回一个空Provide
-    // memory-servlet默认只支持初始化加载的product option
-    let error
-    try {
-      if ((options = optionMap[type]) && (options = options[id])) {
-        provider = providerFactory.create(options)
-        providerMap[namespace] = provider
-
-        debug('provided a product(%s)', namespace)
-      } else {
-        error = Error("Product option does not exist")
+    // 首先，检查这个namespace的provider实例是否可用
+    // 其次，检查attached，若未attach，则尝试attach
+    if (!provider.poison && !provider.attached) {
+      // memory-servlet默认只支持初始化加载的product option
+      // try to attach
+      try {
+        provider.attach()
+      } catch (e) {
+        utils.handleServletError(this, e, `Unable to attach the provider{${namespace}}`)
       }
-    } catch (e) {
-      error = e
     }
-
-    error && utils.handleServletError(this, error, `Unable to provide the product{type = ${type}, id = ${id}`)
 
     return provider
   }
 }
 
 MemoryServlet.Provider = MemoryProvider
-MemoryServlet.Product = MemoryProduct
 
 module.exports = MemoryServlet

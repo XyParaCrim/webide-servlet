@@ -11,14 +11,22 @@ const utils = require('../core/utils')
  */
 class Product extends EventEmitter {
 
+  constructor(provider) {
+    super()
+    this.poison = true
+    this.provider = provider
+  }
+
   /**
    * 通用工厂方法
-   * @param {Object} options
+   * @param {Provider} provider
    * @return {Product}
    */
-  static create(options) {
+  static create(provider) {
     utils.unSupportedHandler()
   }
 }
+
+utils.set('poison-provider', new Product())
 
 module.exports = Product

@@ -3,23 +3,45 @@
  * 可以远程注册中心或者内存储存
  */
 const utils = require('./utils')
-const Product = require('./product')
 const Provider = require('./provider')
 
 class Servlet {
   constructor () {
     this.alive = false
+    this.attached = false
   }
 
   /**
-   * 1.当没有参数时，返回所有注册的products
-   * 2.如果提供筛选条件，则返回筛选后的结果
-   * @param type
-   * @param filterOptions
-   * @returns {ReadonlyArray<Servlet.Product>}
+   * 启动servlet
+   * @param {Function} afterAttached
    */
-  products (type, filterOptions) {
-    return utils.EmptyArray
+  attach(afterAttached) {
+    utils.unSupportedHandler()
+  }
+
+  /**
+   * 与attach方法相反
+   */
+  close() {
+    utils.unSupportedHandler()
+  }
+
+  /**
+   * 根据提供的筛选条件，返回结果，且结果非空({Servlet.Provider}的委托函数)
+   * @param filterOptions
+   * @returns {Servlet.Provider.Product}
+   */
+  supply(filterOptions) {
+    utils.unSupportedHandler()
+  }
+
+  /**
+   * 如果提供type则筛选，反之，则返回所有的products
+   * @param type
+   * @returns {Array<Servlet.Provider.Product>}
+   */
+  supplies(type) {
+    utils.unSupportedHandler()
   }
 
   /**
@@ -27,20 +49,16 @@ class Servlet {
    * @param options
    * @return {Servlet.Provider}
    */
-  provide (options) {
+  provide(options) {
     utils.unSupportedHandler()
   }
 
-  productFactory() {
-    return this.constructor.Product
-  }
 
   providerFactory() {
     return this.constructor.Provider
   }
 }
 
-Servlet.Product = Product
 Servlet.Provider = Provider
 
 module.exports = Servlet

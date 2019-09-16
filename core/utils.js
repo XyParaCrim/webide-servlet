@@ -1,6 +1,11 @@
 const fs = require('fs')
+const map = new Map()
 
 module.exports = {
+  set: map.set.bind(map),
+  get: map.get.bind(map),
+
+
   EmptyArray: Object.freeze([]),
 
   unSupportedHandler() {
@@ -29,6 +34,10 @@ module.exports = {
 
   handleServletWarn(servlet, message) {
 
+  },
+
+  handleIfFunction(fn) {
+    typeof fn === 'function' && fn.call()
   }
 }
 
