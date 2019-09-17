@@ -3,41 +3,18 @@ const EventEmitter = require('events').EventEmitter
 const io = require('socket.io-client')
 const utils = require('../../core/utils')
 
+// product的元事件
+// 对于通讯事件的黑名单，这些事件只相对于Product本身
 const events = new Set([
   'before_emit',
   'after_emit',
   'req_success',
-  'req_error',
-  'add_handler_queue'
+  'req_error'
 ])
 
-function invokeSelfHandler (emitter, args) {
-  EventEmitter.prototype.emit.apply(emitter, args)
+const DEFAULT_OPTIONS = {
+  timeout: 10000
 }
-
-function toRequest(event, data, options) {
-  return {
-    id: utils.generateId(),
-    data: data || {},
-    event,
-    type: options.type,
-    time: new Date().getTime(),
-    timeout: options.timeout
-  }
-}
-
-function flushUnHandlers(handlers) {
-  let copies = handlers.slice(0)
-  handlers.length = 0
-  for (let handler of copies) {
-    handler()
-  }
-}
-
-function checkTimeout(options, defaultValue) {
-  (isNaN(options.timeout = Number(options.timeout)) || options.timeout < 0) && (options.timeout = defaultValue)
-}
-
 
 class MemoryProduct extends Product {
   static create(metadata) {
@@ -47,94 +24,115 @@ class MemoryProduct extends Product {
   constructor(metadata) {
     super(metadata)
     this.poison = false
-    this.unHandlers = Array.of()
   }
 
-  attach() {
-    if (!this.client) {
+  get attached () {
+    return this.client != null
+  }
+
+  /**
+   * @see Product.attach
+   */
+  attach(callback) {
+    const client = this.client
+    if (client) {
+      // 说明之前就已经创建过了
+      if (client.connected) {
+        // 如果本身就连接，那么就直接调用callback
+        utils.handleIfFunction(callback)
+      } else {
+        // 注册callback，尝试连接
+        client.once('connect', callback)
+        client.connect()
+      }
+    } else {
+      // 创建socket-io客户端
+      const parser = MemoryProduct.parser()
       const metadata = this.metadata
 
-      let url = metadata['ip']
-      let socketOptions = metadata['socket.io-client']
+      let url = parser.url(metadata)
+      let socketOptions = parser.socketOptions(metadata)
 
-      // create client
       this.client = io(url, socketOptions)
-      this.attacted = true
-
-      this.client.on('connect', () => flushUnHandlers(this.unHandlers))
-      this.client.on('connect', () => console.log('连接成功'))
     }
   }
 
   emit(event, data, options) {
-    options = options || {}
-    if (this.attacted && this.client.connected) {
-
-      options.type = options.type || this.metadata.type
-
-      checkTimeout(options, 5000)
-
-      invokeSelfHandler(this, ['before_emit', event, options])
-
-      return this._emitWithTimeoutHandling(event, data, options)
+    if (events.has(event)) {
+      // 触发事件的黑名单
+      // 这里不会返回thenable
+      return super.emit.apply(this, arguments)
     }
 
-    return new Promise(resolve => {
-      invokeSelfHandler(this, ['add_handler_queue', event, options])
-      this.unHandlers.push(() => this.emit(event, data, options).then(data => resolve(data)).catch(e=>{console.log(e)}))
-    })
+    // 这里是发送事件
+    if (this.attached) {
+      let emitOptions = this._normalizeOptions(options)
+      let requestData = this.__normalizeReqData(event, data, emitOptions)
+
+      this.emit('before_emit', event, emitOptions)
+
+      return this.request(requestData)
+    } else {
+      // 这里表示attached后，再resolve事件的结果
+      return new Promise(resolve =>
+        this.attach(() =>
+          resolve(this.emit(event, data, options))
+        )
+      )
+    }
   }
 
-  _emitWithTimeoutHandling(event, data, options) {
-    let socket = this.client
-    let finish = true
-    let isTimeout = false
-    let request = toRequest(event, data, options)
+  _normalizeOptions(options) {
+    options = options || {}
 
+    (isNaN(options.timeout = Number(options.timeout)) || options.timeout < 0) && (options.timeout = DEFAULT_OPTIONS.timeout)
+
+    return options
+  }
+
+  __normalizeReqData(event, data, options) {
+    return {
+      id: utils.generateId(),
+      data: data || {},
+      event,
+      type: MemoryProduct.parser().type(this.metadata),
+      time: new Date().getTime(),
+      timeout: options.timeout
+    }
+  }
+
+  request(requestData) {
     return new Promise((resolve, reject) => {
-      socket.emit(request.type, request, result => {
-        finish = true
+      let client = this.client
+      let { type, event, timeout } = requestData
 
-        if (!isTimeout) {
-          if (result.state === 'success') {
-            resolve(result)
-            invokeSelfHandler(socket, Array.of('req_success', {
-              event: request.event,
-              data: result
-            }))
-          } else if (result.state === 'error') {
-            reject(result)
-            invokeSelfHandler(socket, Array.of('req_error', {
-              event: request.event,
-              data: result
-            }))
+
+      client.emit(type, requestData, utils.createExpiredFunction(
+        // timeout 之前触发
+        response => {
+          if (response.state === 'success') {
+            resolve(response)
+            this.emit('req_success', event, response)
+          } else if (response.state === 'error') {
+            reject(response)
+            this.emit('req_error', event, response)
           } else {
-            console.error(`dont support response state : ${result.state},eventId : ${request.event}`)
+            console.error(`dont support response state : ${response.state},eventId : ${event}`)
           }
+        },
 
-          invokeSelfHandler(socket, Array.of('after_emit'))
-        }
+        // timeout后，若上面的函数没有调用，则触发
+        () => {
+          let response = { state: 'error', errorMsg: '请求返回超时 :' + event }
 
-        setTimeout(() => {
-          if (!finish) {
-            isTimeout = true
+          reject(response)
+          this.emit('req_error', event, response)
+          this.emit('after_emit', event, response)
+        },
 
-            let errMsg = {
-              state: 'error',
-              errorMsg: '请求返回超时 :' + event
-            }
-
-            reject(errMsg)
-
-            invokeSelfHandler(socket, Array.of('req_error', {
-              event,
-              data: errMsg
-            }))
-            invokeSelfHandler(socket, Array.of('after_emit'))
-          }
-        }, options.timeout)
-
-      })
+        // 有效事件
+        timeout
+      ))
     })
   }
 

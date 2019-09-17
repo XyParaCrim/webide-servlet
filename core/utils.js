@@ -30,6 +30,23 @@ module.exports = {
 
   handleIfFunction(fn) {
     typeof fn === 'function' && fn.call()
+  },
+
+  createExpiredFunction(deadline, timeout, expire) {
+    let called = false
+    let expired = false
+
+    function expiredFunction () {
+      called = true
+      expired || deadline.apply(null, arguments)
+    }
+
+    setTimeout(() => {
+      expired = true
+      called || timeout()
+    }, expire)
+
+    return expiredFunction
   }
 }
 

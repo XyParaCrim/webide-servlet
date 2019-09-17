@@ -19,12 +19,28 @@ class Product extends EventEmitter {
   }
 
   /**
+   * 尝试与provider交互
+   * @param {Function} callback attached后调用，可以为空
+   */
+  attach(callback) {
+    utils.unSupportedHandler()
+  }
+
+  /**
    * 通用工厂方法
    * @param {Object} metadata
    * @return {Product}
    */
   static create(metadata) {
     return utils.get('poison-provider')
+  }
+
+  /**
+   * 返回解析product metadata的parser
+   * @return {Parser}
+   */
+  static parser() {
+    utils.unSupportedHandler()
   }
 }
 
