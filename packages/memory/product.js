@@ -1,5 +1,4 @@
 const Product = require('../../core/product')
-const EventEmitter = require('events').EventEmitter
 const io = require('socket.io-client')
 const utils = require('../../core/utils')
 
@@ -16,9 +15,32 @@ const DEFAULT_OPTIONS = {
   timeout: 10000
 }
 
+const DefaultParser = {
+  url(metadata) {
+    return metadata.ip
+  },
+  socketOptions(metadata) {
+    return metadata['socket.io-client']
+  },
+  type(metadata) {
+    return metadata.type
+  }
+}
+
+
 class MemoryProduct extends Product {
+  /**
+   * @see Product.create
+   */
   static create(metadata) {
     return new MemoryProduct(metadata)
+  }
+
+  /**
+   * @see Product.parser
+   */
+  static parser() {
+    return DefaultParser
   }
 
   constructor(metadata) {
