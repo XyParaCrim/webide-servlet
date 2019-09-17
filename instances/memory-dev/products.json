@@ -1,15 +1,24 @@
 [
   {
     "id": "aaa",
-    "type": "v1",
+    "type": "v2sual",
     "port": 8080,
     "socket.io": {},
-    "client": {
-      "url": "http://localhost:8080"
+    "metadata": {
+      "name": "哈哈哈哈",
+      "id": "aaa",
+      "type": "v2sual",
+      "ip": "http://localhost:8080"
     }
   },
   {
     "id": "aa21",
-    "type": "v1"
+    "type": "v2sual",
+    "metadata": {
+      "name": "dadasas",
+      "id": "aa21",
+      "type": "v2sual",
+      "ip": "http://localhost:8080"
+    }
   }
 ]

@@ -21,6 +21,7 @@ class MemoryServlet extends Servlet {
     this.options = options
     this.parser = defaultParser
     this.providerMap = {}
+    this.providers = []
   }
 
   /**
@@ -39,7 +40,7 @@ class MemoryServlet extends Servlet {
       debug("loading products file(%s)", path)
 
       io.loadFile(path)
-        // 解析数组配置，每一项配置初始化一个product
+      // 解析数组配置，每一项配置初始化一个product
         .then(productConfig =>
           utils.resolveIteratorValues(productConfig).forEach(options => this._addLazyProvider(options))
         )
@@ -79,7 +80,8 @@ class MemoryServlet extends Servlet {
         debug('creating lazy provider(%s) failed', namespace)
       } else {
         debug('creating lazy provider(%s) done', namespace)
-        providerMap[namespace] = provider
+        providerMap[namespace] = provider // TODO
+        this.providers.push(provider)
       }
     }
   }
@@ -90,6 +92,14 @@ class MemoryServlet extends Servlet {
 
   metadata(filterOptions) {
     return this.getProvider(filterOptions).metadata()
+  }
+
+  // TODO
+  batchMetadata(type) {
+    // 返回所有metadata
+    if (arguments.length === 0) {
+      return this.providers.map(product => product.metadata())
+    }
   }
 
   getProvider(filterOptions) {

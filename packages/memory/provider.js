@@ -1,168 +1,149 @@
-/**
- * socket.io implementation
- */
-const Provider = require("../../core/provider")
-const MemoryProduct = require('./product')
-const io = require("socket.io")
+const Servlet = require('../../core/servlet')
+const MemoryProvider = require('./provider')
+const utils = require('../../core/utils')
+const io = require('../../core/io')
 const Debug = require('debug')
+const path = require('path')
 
-const debug = Debug('webide-servlet:memory-provider')
-const DefaultParser = {
-  id: function (productOptions) {
-    return productOptions.id
-  },
-  type(productOptions) {
-    return productOptions.type
-  },
-  port(options) {
-    return options.port
-  },
-  namespace(options) {
-    return options.id + '#' + options.type
-  },
-  socketOptions(options) {
-    return options['socket.io']
-  },
-  metadata(options) {
-    return options['client']
-  },
-  simpleCheckProductOptions() {}
+const debug = Debug('webide-servlet:memory-servlet')
+const defaultParser = {
+  path(options) {
+    return path.resolve(options.cwd, options.filename)
+  }
 }
 
-function normalizeReqData(reqData, provider) {
-  reqData.id = reqData.id || provider.io.engine.generateId()
-  reqData.callbackId = reqData.id
-  reqData.timeout = 5000
-}
+class MemoryServlet extends Servlet {
+  constructor(options) {
+    super()
 
-class MemoryProvider extends Provider {
+    this.name = "memory-servlet"
+    this.alive = true // always true
+    this.options = options
+    this.parser = defaultParser
+    this.providerMap = {}
+    this.providers = []
+  }
 
   /**
-   * @see core/provider$create
+   * 默认只是加载本地配置文件
+   * @param afterAttached
    */
-  static create(options) {
-    let provider = new MemoryProvider(options)
-    provider.attach()
+  attach (afterAttached) {
+    if (this.attached) {
+      utils.handleIfFunction(afterAttached)
+    } else {
+      const options = this.options
+      const parser = this.parser
+
+      let path = parser.path(options)
+
+      debug("loading products file(%s)", path)
+
+      io.loadFile(path)
+      // 解析数组配置，每一项配置初始化一个product
+        .then(productConfig =>
+          utils.resolveIteratorValues(productConfig).forEach(options => this._addLazyProvider(options))
+        )
+        .catch(error =>
+          utils.handleServletError(this, error, `Unable to retrieves products caused by loading file{${path} failed`)
+        )
+        .finally(() =>
+          (this.attached = true) && utils.handleIfFunction(afterAttached)
+        )
+    }
+  }
+
+  /**
+   * 通过product-options创建lazy provider
+   * @param {Object} productOptions
+   * @private
+   */
+  _addLazyProvider(productOptions) {
+    const providerFactory = this.providerFactory()
+    const providerParser = providerFactory.parser()
+    const providerMap = this.providerMap
+
+    let namespace = providerParser.namespace(productOptions)
+    let provider = providerMap[namespace]
+    if (provider && provider.alive) {
+      // 首先处理此namespace下已存在的provider
+      // 原则上，如果alive，则旧的优先，反之，则旧的优先
+      utils.handleServletWarn(this, `A product{${namespace}} is dropped caused by existed`)
+    } else {
+      // un-alive -> replace
+      debug('creating lazy provider(%s)', namespace)
+
+      provider = providerFactory.createLazy(productOptions)
+
+      // check 这个返回的provider是否完好无损的，若是poison则drop it, 维持原provider options
+      if (provider.poison) {
+        debug('creating lazy provider(%s) failed', namespace)
+      } else {
+        debug('creating lazy provider(%s) done', namespace)
+        providerMap[namespace] = provider // TODO
+        this.providers.push(provider)
+      }
+    }
+  }
+
+  supply(filterOptions) {
+    return this.getProvider(filterOptions).supply()
+  }
+
+  metadata(filterOptions) {
+    return this.getProvider(filterOptions).metadata()
+  }
+
+  // TODO
+  batchMetadata(type) {
+    // 返回所有metadata
+    if (arguments.length === 0) {
+      return this.providers.map(product => product.metadata())
+    }
+  }
+
+  getProvider(filterOptions) {
+    const providerMap = this.providerMap
+    const providerParser = this.providerFactory().parser()
+
+    let provider, namespace
+
+    provider = providerMap[namespace = providerParser.namespace(filterOptions)] || utils.get('poison-provider')
+
+    provider.poison && utils.handleServletError(this, new TypeError(`Unable to query{${namespace}} provider with no-matched options`))
+
     return provider
   }
 
   /**
-   * @see core/provider$createLazy
+   * for this implement, 可以获取的providers在{@see _attach}加载本地就已经决定了，
+   * 不存在动态添加新的provider
+   * @param options
+   * @returns {Servlet.Provider} 尝试返回一个attached的provider
    */
-  static createLazy(options) {
-    return new MemoryProvider(options)
-  }
+  provide(options) {
+    const providerMap = this.providerMap
+    const providerParser = this.providerFactory().parser()
 
-  /**
-   * @see core/provider$parser
-   */
-  static parser() {
-    return DefaultParser
-  }
+    let namespace = providerParser.namespace(options)
+    let provider = providerMap[namespace] || utils.get('poison-provider')
 
-  constructor (options) {
-    super()
-    this.alive = true // always true
-    this.poison = false
-    this.options = options
-    this.server = null
-    // this.parser = this.constructor.parser()
-    this._setUp()
-  }
-
-  /**
-   * 将一些事件方法绑上下文
-   * @private
-   */
-  _setUp() {
-    this._onConnect = this._onConnect.bind(this)
-  }
-
-  /**
-   * @see Provider.attach
-   */
-  attach() {
-    if (!this.attached) {
-      const parser = MemoryProvider.parser()
-      const options = this.options
-
-      let port = parser.port(options)
-      let optionsOfSocketIO = parser.socketOptions(options)
-      let server = io(port, optionsOfSocketIO)
-
-      debug('starting socket-io server(%s)', port)
-
-      // TODO 不是有效绑定
-      this.server = server
-      this.alive = this.attached = true
-
-      // 此事件挂在namespace上，namespace只有一个connection事件
-      server.on('connection', this._onConnect)
-    }
-  }
-
-  /**
-   * 关闭socket-io
-   */
-  close() {
-    if (this.attached && this.server) {
-      this.server.close()
-    }
-  }
-
-  metadata() {
-    return MemoryProvider.parser().metadata(this.options)
-  }
-
-  /**
-   * socket-io event(这里的实现和webide一摸一样)
-   * @param socket
-   * @private
-   */
-  _onConnect(socket) {
-    debug('a socket(%s) is connected, binding events', socket.id)
-
-    const parser = MemoryProvider.parser()
-    const options = this.options
-
-    let type = parser.type(options)
-
-    // socket-io中socket对象默认事件
-    socket.on('disconnect', reason => console.log(`断开连接: { socket-id: ${socket.id}, reason: ${reason}}`))
-    socket.on('error', error => console.error(`发生错误: { socket-id: ${socket.id}, error: ${error}}`))
-    socket.on('disconnecting', reason => console.log(`正在断开连接中: { socket-id: ${socket.id}, reason: ${reason}}`))
-
-    // 主要交互事件
-    socket.on(type, (reqData, callback) => {
-      normalizeReqData(reqData)
-
-      let event = reqData.event
-      let timeout = reqData.timeout
-      let callbackId = reqData.callbackId
-      if (this.listenerCount(event) > 0) {
-        // 沿用webide实现，所以显得部分事件分发显得多余
-        // 不使用once，是因为可能同一事件可能注册多个function
-        debug('register callback(%s)', event + '#' + callback)
-        this.on(callbackId, callback)
-        this.emit(event, reqData)
-
-        // timeout，统一注销此次callback
-        setTimeout(() => {
-          this.off(callbackId, callback)
-          debug('unregister callback(%s)', event + '#' + callback)
-        }, timeout)
-      } else {
-        // 如果没有此event事件则被当作此次通信错误
-        callback({
-          state: 'error',
-          errorMsg: `未找到${event}事件`
-        })
+    // 首先，检查这个namespace的provider实例是否可用
+    // 其次，检查attached，若未attach，则尝试attach
+    if (!provider.poison && !provider.attached) {
+      // memory-servlet默认只支持初始化加载的product option
+      // try to attach
+      try {
+        provider.attach()
+      } catch (e) {
+        utils.handleServletError(this, e, `Unable to attach the provider{${namespace}}`)
       }
-    })
+    }
+
+    return provider
   }
 }
 
-// socket-io.client实现
-MemoryProvider.Product = MemoryProduct
+MemoryServlet.Provider = MemoryProvider
 
-module.exports = MemoryProvider
+module.exports = MemoryServlet

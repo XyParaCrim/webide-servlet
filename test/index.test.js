@@ -15,13 +15,13 @@ describe('test WebideServlet.load', () => {
 })
 
 describe("test WebideServlet.resolveProductFactoryPath", () => {
-
   // 测试error packet的路径
   test('get error\'s package path fails with an error', () => {
     return WebideServlet.resolveProductFactoryPath('error')
       .catch(e => expect(e.name).toMatch('Error'))
   })
 
+  // 测试关于memory-dev，以memory-dev信息为准
   test('get class of memory\'s product', () => {
     const path = require('path')
     return WebideServlet.resolveProductFactoryPath('memory-dev')

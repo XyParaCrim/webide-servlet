@@ -54,7 +54,7 @@ class MemoryProduct extends Product {
     if (!this.client) {
       const metadata = this.metadata
 
-      let url = metadata['url']
+      let url = metadata['ip']
       let socketOptions = metadata['socket.io-client']
 
       // create client
