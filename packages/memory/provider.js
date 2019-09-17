@@ -2,7 +2,7 @@
  * socket.io implementation
  */
 const Provider = require("../../core/provider")
-const MemoryProduct = require('./memory-product')
+const MemoryProduct = require('./product')
 const io = require("socket.io")
 const Debug = require('debug')
 

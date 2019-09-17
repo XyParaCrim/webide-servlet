@@ -1,5 +1,5 @@
 const Servlet = require('../../core/servlet')
-const MemoryProvider = require('./memory-provider')
+const MemoryProvider = require('./provider')
 const utils = require('../../core/utils')
 const io = require('../../core/io')
 const Debug = require('debug')

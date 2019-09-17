@@ -1,8 +1,8 @@
-const MemoryServlet = require('../../packages/memory/memory-servlet')
+//const MemoryServlet = require('../../packages/memory/servlet')
 const DEFAULT_PRODUCTS_FILE = "products.json"
 
-module.exports = function createMemoryDev() {
-  return new MemoryServlet({
+module.exports = function (Servlet) {
+  return new Servlet({
     cwd: __dirname,
     filename: DEFAULT_PRODUCTS_FILE
   })
