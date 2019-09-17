@@ -2,18 +2,19 @@
   {
     "id": "aaa",
     "type": "v2sual",
-    "port": 8080,
+    "port": 9595,
     "socket.io": {},
     "metadata": {
       "name": "哈哈哈哈",
       "id": "aaa",
       "type": "v2sual",
-      "ip": "http://localhost:8080"
+      "ip": "http://localhost:9595"
     }
   },
   {
     "id": "aa21",
     "type": "v2sual",
+    "port": 8080,
     "metadata": {
       "name": "dadasas",
       "id": "aa21",

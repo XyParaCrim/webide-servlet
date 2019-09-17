@@ -67,7 +67,10 @@ class MemoryProduct extends Product {
   }
 
   emit(event, data, options) {
+    options = options || {}
     if (this.attacted && this.client.connected) {
+
+      options.type = options.type || this.metadata.type
 
       checkTimeout(options, 5000)
 
