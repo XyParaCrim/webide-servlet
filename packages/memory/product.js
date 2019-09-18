@@ -118,7 +118,9 @@ class MemoryProduct extends Product {
   _normalizeOptions(options) {
     options = options || {}
 
-    (isNaN(options.timeout = Number(options.timeout)) || options.timeout < 0) && (options.timeout = DEFAULT_OPTIONS.timeout)
+    if (isNaN(options.timeout = Number(options.timeout)) || options.timeout < 0) {
+      options.timeout = DEFAULT_OPTIONS.timeout
+    }
 
     return options
   }
