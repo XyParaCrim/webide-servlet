@@ -1,4 +1,3 @@
-//const MemoryServlet = require('../../packages/memory/servlet')
 const DEFAULT_PRODUCTS_FILE = "products.json"
 
 module.exports = function (Servlet) {
