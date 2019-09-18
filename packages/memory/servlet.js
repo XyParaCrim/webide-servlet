@@ -102,17 +102,29 @@ class MemoryServlet extends Servlet {
     }
   }
 
+  // TODO 严重
   getProvider(filterOptions) {
-    const providerMap = this.providerMap
-    const providerParser = this.providerFactory().parser()
+    if (typeof filterOptions === 'object') {
+      const providerMap = this.providerMap
+      const providerParser = this.providerFactory().parser()
 
-    let provider, namespace
+      let provider, namespace
 
-    provider = providerMap[namespace = providerParser.namespace(filterOptions)] || utils.get('poison-provider')
+      provider = providerMap[namespace = providerParser.namespace(filterOptions)] || utils.get('poison-provider')
 
-    provider.poison && utils.handleServletError(this, new TypeError(`Unable to query{${namespace}} provider with no-matched options`))
+      provider.poison && utils.handleServletError(this, new TypeError(`Unable to query{${namespace}} provider with no-matched options`))
 
-    return provider
+      return provider
+    } else {
+      for (let provider of this.providers) {
+        // TODO
+        if (provider.options.id === filterOptions) {
+          return provider
+        }
+      }
+    }
+
+    return utils.get('poison-provider')
   }
 
   /**

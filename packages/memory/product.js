@@ -17,7 +17,7 @@ const DEFAULT_OPTIONS = {
 
 const DefaultParser = {
   url(metadata) {
-    return metadata.ip
+    return metadata.url
   },
   socketOptions(metadata) {
     return metadata['socket.io-client']

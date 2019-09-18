@@ -8,7 +8,9 @@
       "name": "网银",
       "id": "vda",
       "type": "v2sual",
-      "ip": "http://localhost:9595",
+      "url": "http://localhost:9595",
+      "ip": "127.0.0.1",
+      "port": 9595,
       "httpPort": "3000",
       "preview": "http://localhost:7007",
       "socket.io-client": {
