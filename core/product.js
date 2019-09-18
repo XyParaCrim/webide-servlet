@@ -23,7 +23,21 @@ class Product extends EventEmitter {
    * @param {Function} callback attached后调用，可以为空
    */
   attach(callback) {
-    utils.unSupportedHandler()
+    utils.handleIfFunction(callback)
+  }
+
+  /**
+   * 简单中间件或者插件
+   * @param {Array<function> | function}middles
+   */
+  use(middles) {
+    if (typeof middles === 'function') {
+      middles(this)
+    } else if (middles instanceof Array) {
+      for (let middle of middles) {
+        typeof middle === 'function' && middle(this)
+      }
+    }
   }
 
   /**
@@ -41,6 +55,14 @@ class Product extends EventEmitter {
    */
   static parser() {
     utils.unSupportedHandler()
+  }
+
+  /**
+   * 返回poison为true的product
+   * @return {Product}
+   */
+  static poison() {
+    return utils.get('poison-provider')
   }
 }
 

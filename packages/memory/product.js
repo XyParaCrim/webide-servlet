@@ -27,6 +27,11 @@ const DefaultParser = {
   }
 }
 
+const poison = new Product()
+
+poison.emit = function () {
+  return Promise.reject(Error('This product does not exist'))
+}
 
 class MemoryProduct extends Product {
   /**
@@ -41,6 +46,10 @@ class MemoryProduct extends Product {
    */
   static parser() {
     return DefaultParser
+  }
+
+  static poison() {
+    return poison
   }
 
   constructor(metadata) {
