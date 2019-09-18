@@ -115,6 +115,20 @@ class MemoryProvider extends Provider {
   }
 
   /**
+   * @see Provider.set
+   */
+  set(key, value) {
+    if (arguments.length === 1 && typeof key === 'object') {
+      for (let [k, v] of Object.entries(key)) {
+        this.set(k, v)
+      }
+    } else if(arguments.length === 2) {
+      const metadata = this.metadata()
+      metadata[key] = value
+    }
+  }
+
+  /**
    * socket-io event(这里的实现和webide一摸一样)
    * @param socket
    * @private

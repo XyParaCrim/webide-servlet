@@ -9,6 +9,8 @@
       "id": "aaa",
       "type": "v2sual",
       "ip": "http://localhost:9595",
+      "httpPort": "3000",
+      "preview": "http://localhost:7007",
       "socket.io-client": {
         "reconnectionAttempts": 10
       }

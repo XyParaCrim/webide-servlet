@@ -41,6 +41,14 @@ class Product extends EventEmitter {
   }
 
   /**
+   * 获取元数据
+   * @param key
+   */
+  get(key) {
+    // TODO
+  }
+
+  /**
    * 通用工厂方法
    * @param {Object} metadata
    * @return {Product}

@@ -29,9 +29,18 @@ class Provider extends EventEmitter {
   }
 
   /**
-   * 返回product的元
+   * 返回product的元数据
    */
   metadata() {
+    utils.unSupportedHandler()
+  }
+
+  /**
+   * 设置元数据，参数key-value，也可以是对象
+   * @param key
+   * @param value
+   */
+  set(key, value) {
     utils.unSupportedHandler()
   }
 
