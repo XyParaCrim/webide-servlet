@@ -62,6 +62,7 @@ class MemoryProduct extends Product {
   }
 
   /**
+   * // TODO 怎么表示连接超时的情况
    * @see Product.attach
    */
   attach(callback) {
@@ -73,7 +74,7 @@ class MemoryProduct extends Product {
         utils.handleIfFunction(callback)
       } else {
         // 注册callback，尝试连接
-        client.once('connect', callback)
+        this.client.once('connect', () => utils.handleIfFunction(callback))
         client.connect()
       }
     } else {
@@ -85,6 +86,7 @@ class MemoryProduct extends Product {
       let socketOptions = parser.socketOptions(metadata)
 
       this.client = io(url, socketOptions)
+      this.client.once('connect', () => utils.handleIfFunction(callback))
     }
   }
 

@@ -8,7 +8,10 @@
       "name": "哈哈哈哈",
       "id": "aaa",
       "type": "v2sual",
-      "ip": "http://localhost:9595"
+      "ip": "http://localhost:9595",
+      "socket.io-client": {
+        "reconnectionAttempts": 10
+      }
     }
   },
   {
