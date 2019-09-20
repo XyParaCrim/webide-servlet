@@ -49,6 +49,13 @@ class Product extends EventEmitter {
   }
 
   /**
+   * for log
+   */
+  detail() {
+    return 'Invalid Product'
+  }
+
+  /**
    * 通用工厂方法
    * @param {Object} metadata
    * @return {Product}

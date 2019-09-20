@@ -14,4 +14,24 @@ describe('utils', () => {
         expect(jsonContent).toHaveLength(2)
       })
   })
+
+  test('get and set - store global variable', () => {
+
+    // 简单测试
+    expect(utils.get).toBeInstanceOf(Function)
+    expect(utils.set).toBeInstanceOf(Function)
+
+    // 一致性
+    let temp = {}
+
+    utils.set(temp, temp)
+    expect(utils.get(temp)).toBe(temp)
+  })
+
+  test('generateId - generate uniqueness id', () => {
+    // uniqueness
+    expect(utils.generateId()).not.toBe(utils.generateId())
+  })
+
+
 })

@@ -4,6 +4,7 @@ const utils = require('../../core/utils')
 const io = require('../../core/io')
 const Debug = require('debug')
 const path = require('path')
+const logger = require('../../core/logger')
 
 const debug = Debug('webide-servlet:memory-servlet')
 const defaultParser = {
@@ -39,13 +40,15 @@ class MemoryServlet extends Servlet {
 
       debug("loading products file(%s)", path)
 
+      logger.info(this, `loading products file(${path})`)
+
       io.loadFile(path)
       // 解析数组配置，每一项配置初始化一个product
         .then(productConfig =>
           utils.resolveIteratorValues(productConfig).forEach(options => this._addLazyProvider(options))
         )
         .catch(error =>
-          utils.handleServletError(this, error, `Unable to retrieves products caused by loading file{${path} failed`)
+          logger.error(this, `Unable to retrieves products caused by loading file{${path} failed`, error)
         )
         .finally(() =>
           (this.attached = true) && utils.handleIfFunction(afterAttached)
@@ -68,18 +71,21 @@ class MemoryServlet extends Servlet {
     if (provider && provider.alive) {
       // 首先处理此namespace下已存在的provider
       // 原则上，如果alive，则旧的优先，反之，则旧的优先
-      utils.handleServletWarn(this, `A product{${namespace}} is dropped caused by existed`)
+      logger.warn(this, `A product{${namespace}} is dropped caused by existed`)
     } else {
       // un-alive -> replace
       debug('creating lazy provider(%s)', namespace)
+      logger.info(this, `creating lazy provider(${namespace})`)
 
       provider = providerFactory.createLazy(productOptions)
 
       // check 这个返回的provider是否完好无损的，若是poison则drop it, 维持原provider options
       if (provider.poison) {
         debug('creating lazy provider(%s) failed', namespace)
+        logger.warn(this, `creating lazy provider(${namespace}) failed`)
       } else {
         debug('creating lazy provider(%s) done', namespace)
+        logger.info(this, `creating lazy provider(${namespace}) done`)
         providerMap[namespace] = provider // TODO
         this.providers.push(provider)
       }
@@ -112,7 +118,7 @@ class MemoryServlet extends Servlet {
 
       provider = providerMap[namespace = providerParser.namespace(filterOptions)] || utils.get('poison-provider')
 
-      provider.poison && utils.handleServletError(this, new TypeError(`Unable to query{${namespace}} provider with no-matched options`))
+      provider.poison && logger.error(this, `Unable to query{${namespace}} provider with no-matched options`)
 
       return provider
     } else {
@@ -123,6 +129,8 @@ class MemoryServlet extends Servlet {
         }
       }
     }
+
+    logger.error(this, "Unable to find a matched provider, and return poison-provider" , TypeError(filterOptions))
 
     return utils.get('poison-provider')
   }
@@ -148,11 +156,19 @@ class MemoryServlet extends Servlet {
       try {
         provider.attach()
       } catch (e) {
-        utils.handleServletError(this, e, `Unable to attach the provider{${namespace}}`)
+        logger.error(this, `Unable to attach the provider{${namespace}}`, e)
       }
+    } else if (provider.poison) {
+      logger.error(this, `Unable to provide a service{${namespace}}`, TypeError("输入正确的id和type"))
     }
 
+    logger.info(this, "providing a service: " + provider.detail())
+
     return provider
+  }
+
+  detail() {
+    return `${this.name}{ alive: ${this.alive}, attached: ${this.attached} }`
   }
 }
 

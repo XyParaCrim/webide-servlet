@@ -26,14 +26,14 @@ describe('memory-dev', () => {
         expect(notExistedProvider).toBe(utils.get('poison-provider'))
         expect(notExistedProvider.poison).toBeTruthy()
 
-        let existedProvider = servlet.provide({ "id": "aaa", "type": "v1" })
+        let existedProvider = servlet.provide({ "id": "vda", "type": "v2sual" })
         expect(existedProvider.poison).toBeFalsy()
         expect(existedProvider).toBeInstanceOf(MemoryServlet.Provider)
 
         // 测试 provider metadata
         let metadata = existedProvider.metadata()
         expect(metadata).not.toBeNull()
-        expect(metadata.url).toBe("http://localhost:8080")
+        expect(metadata.url).toBe("http://localhost:9595")
 
 
         existedProvider.close()

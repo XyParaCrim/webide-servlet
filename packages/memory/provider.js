@@ -5,6 +5,7 @@ const Provider = require("../../core/provider")
 const MemoryProduct = require('./product')
 const io = require("socket.io")
 const Debug = require('debug')
+const logger = require('../../core/logger')
 
 const debug = Debug('webide-servlet:memory-provider')
 const DefaultParser = {
@@ -62,6 +63,7 @@ class MemoryProvider extends Provider {
 
   constructor (options) {
     super()
+    this.name = "memory-provider"
     this.alive = true // always true
     this.poison = false
     this.options = options
@@ -91,6 +93,7 @@ class MemoryProvider extends Provider {
       let server = io(port, optionsOfSocketIO)
 
       debug('starting socket-io server(%s)', port)
+      logger.info(this, `attaching socket-io server(${port})...`)
 
       // TODO 不是有效绑定
       this.server = server
@@ -98,6 +101,8 @@ class MemoryProvider extends Provider {
 
       // 此事件挂在namespace上，namespace只有一个connection事件
       server.on('connection', this._onConnect)
+
+      logger.info(this, "start socket.io server: " + port)
     }
   }
 
@@ -106,7 +111,12 @@ class MemoryProvider extends Provider {
    */
   close() {
     if (this.attached && this.server) {
-      this.server.close()
+      let port = MemoryProvider.parser().port(this.options)
+
+      logger.info(this, `closing socket-io server(${port})...`)
+      this.server.close(() => {
+        logger.info(this, `closed socket-io server(${port})...`)
+      })
     }
   }
 
@@ -153,7 +163,11 @@ class MemoryProvider extends Provider {
       let event = reqData.event
       let timeout = reqData.timeout
       let callbackId = reqData.callbackId
-      if (this.listenerCount(event) > 0) {
+      let callbackCount = this.listenerCount(event)
+
+      logger.info(this, `[left: ${timeout}]receive a event(${event}), pending callback(${callbackId}), registered callback count(${callbackCount})`)
+
+      if (callbackCount > 0) {
         // 沿用webide实现，所以显得部分事件分发显得多余
         // 不使用once，是因为可能同一事件可能注册多个function
         debug('register callback(%s)', event + '#' + callback)
@@ -163,9 +177,11 @@ class MemoryProvider extends Provider {
         // timeout，统一注销此次callback
         setTimeout(() => {
           this.off(callbackId, callback)
+          logger.info(this, `timeout(${event}#${callbackId}), unregister callback`)
           debug('unregister callback(%s)', event + '#' + callback)
         }, timeout)
       } else {
+        logger.info(this, `在服务端未注册事件(${event}#${callbackId})`)
         // 如果没有此event事件则被当作此次通信错误
         callback({
           state: 'error',
@@ -173,6 +189,10 @@ class MemoryProvider extends Provider {
         })
       }
     })
+  }
+
+  detail() {
+    return `${this.name}{ port: ${MemoryProvider.parser().port(this.options)}, namespace: ${MemoryProvider.parser().namespace(this.options)}, attached: ${this.attached} }`
   }
 }
 

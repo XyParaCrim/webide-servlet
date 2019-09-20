@@ -29,6 +29,13 @@ class Provider extends EventEmitter {
   }
 
   /**
+   * for log
+   */
+  detail() {
+    return 'Invalid Provider'
+  }
+
+  /**
    * 返回product的元数据
    */
   metadata() {

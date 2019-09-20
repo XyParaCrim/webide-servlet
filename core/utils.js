@@ -2,11 +2,14 @@ const base64id = require('base64id');
 const map = new Map()
 
 module.exports = {
+
+  /* 存储全局变量 for this project */
+
   set: map.set.bind(map),
+
   get: map.get.bind(map),
 
-
-  EmptyArray: Object.freeze([]),
+  /* generate uniqueness identifier */
 
   generateId() {
     return base64id.generateId()
@@ -18,14 +21,6 @@ module.exports = {
 
   resolveIteratorValues(iterator) {
     return Object.values(iterator)
-  },
-
-  handleServletError(servlet, error, message) {
-
-  },
-
-  handleServletWarn(servlet, message) {
-
   },
 
   handleIfFunction(fn) {

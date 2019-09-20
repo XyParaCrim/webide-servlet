@@ -54,6 +54,13 @@ class Servlet {
   }
 
   /**
+   * for log
+   */
+  detail() {
+    return 'Invalid Servlet'
+  }
+
+  /**
    * 根据提供的筛选条件，返回结果,且结果非空
    * @param filterOptions
    */
