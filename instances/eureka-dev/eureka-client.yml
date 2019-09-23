@@ -9,6 +9,12 @@ instance:
   dataCenterInfo:
     name: 'MyOwn'
     '@class': 'com.netflix.appinfo.InstanceInfo$DefaultDataCenterInfo'
+  metadata:
+    id: "netbank"
+    name: "网银"
+    type: "v2sual"
+    ip: "localhost:xxxx"
+    xx: "hhh"
 eureka:
   host: localhost
   port: 9528

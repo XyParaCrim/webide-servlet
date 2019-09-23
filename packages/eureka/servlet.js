@@ -4,6 +4,7 @@ const logger = require('../../core/logger')
 
 const Servlet = require('../../core/servlet')
 const Eureka = require('eureka-js-client').Eureka
+const MemoryProvider = require('../memory/provider')
 
 /**
  * Eureka implement
@@ -22,9 +23,12 @@ class EurekaServlet extends Servlet {
     this.name = 'eureka-servlet'
     this.alive = true
     this.options = options
+    this.provider = null
   }
 
-
+  /**
+   * 1.默认不自动注册，不自动拉去注册服务
+   */
   attach(afterAttached) {
     if (this.attached) {
       utils.handleIfFunction(afterAttached)
@@ -33,6 +37,8 @@ class EurekaServlet extends Servlet {
 
       const options = this.options // 默认这就是eureka options
       const client = this.client = new Eureka(options)
+
+      client.logger.level('debug')
 
       client.start(e => {
         if (e) {
@@ -46,6 +52,49 @@ class EurekaServlet extends Servlet {
       })
     }
   }
+
+  /**
+   * 只支持单个进程单个服务注册，所以始终返回一个provider对象
+   */
+  provide(options) {
+    this._validateAttached()
+
+    const providerFactory = this.providerFactory()
+    const client = this.client
+    const provider = this.provider || providerFactory.createLazy(client.config.instance)
+
+    this._registerWithEureka()
+
+    return provider
+  }
+
+  _registerWithEureka() {
+    this.client.register(e => {
+      if (e) {
+        logger.error(this, 'Unable to register instance', e)
+      } else {
+        this._heartBeats()
+      }
+    })
+  }
+
+  _heartBeats() {
+    this.client.heartbeat || this.client.startHeartbeats()
+  }
+
+  _validateAttached() {
+    if (!this.attached) {
+      throw Error("Please attach servlet")
+    }
+  }
+
+  supply(filterOptions) {
+    this._validateAttached()
+
+    console.log(this.client.cache.app[0])
+  }
 }
+
+EurekaServlet.Provider = MemoryProvider
 
 module.exports = EurekaServlet
