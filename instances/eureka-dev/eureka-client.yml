@@ -1,0 +1,17 @@
+instance:
+  app: webide-service
+  hostName: 127.0.0.1
+  ipAddr: 127.0.0.1
+  port:
+    '$': 8080
+    '@enabled': true
+  vipAddress: webide-service
+  dataCenterInfo:
+    name: 'MyOwn'
+    '@class': 'com.netflix.appinfo.InstanceInfo$DefaultDataCenterInfo'
+eureka:
+  host: localhost
+  port: 9528
+  registerWithEureka: false
+  fetchRegistry: false
+  servicePath: '/eureka/apps/'

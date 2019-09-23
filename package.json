@@ -2,8 +2,9 @@
   "name": "webide-servlet",
   "version": "1.0.0",
   "dependencies": {
+    "base64id": "latest",
     "debug": "latest",
-    "base64id": "latest"
+    "eureka-js-client": "^4.5.0"
   },
   "devDependencies": {
     "babel-core": "^6.26.3",
