@@ -11,11 +11,11 @@ const utils = require('../core/utils')
  */
 class Product extends EventEmitter {
 
-  constructor(metadata) {
+  constructor(options) {
     super()
     this.poison = true
     this.attacted = false
-    this.metadata = metadata
+    utils.bindProperties(this, options)
   }
 
   /**
@@ -57,19 +57,11 @@ class Product extends EventEmitter {
 
   /**
    * 通用工厂方法
-   * @param {Object} metadata
+   * @param {Object} options
    * @return {Product}
    */
-  static create(metadata) {
+  static create(options) {
     return utils.get('poison-provider')
-  }
-
-  /**
-   * 返回解析product metadata的parser
-   * @return {Parser}
-   */
-  static parser() {
-    utils.unSupportedHandler()
   }
 
   /**

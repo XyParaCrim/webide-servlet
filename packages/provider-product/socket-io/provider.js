@@ -1,34 +1,13 @@
 /**
  * socket.io implementation
  */
-const Provider = require("../../core/provider")
-const MemoryProduct = require('./product')
+const Provider = require("../../../core/provider")
+const SocketIoProduct = require('./product')
 const io = require("socket.io")
-const Debug = require('debug')
-const logger = require('../../core/logger')
+const debug = require('debug')('webide-servlet:memory-provider')
+const logger = require('../../../core/logger')
+const socketOptions = require('./socket.io-server.json')
 
-const debug = Debug('webide-servlet:memory-provider')
-const DefaultParser = {
-  id: function (productOptions) {
-    return productOptions.id
-  },
-  type(productOptions) {
-    return productOptions.type
-  },
-  port(options) {
-    return options.port
-  },
-  namespace(options) {
-    return options.id + '#' + options.type
-  },
-  socketOptions(options) {
-    return options['socket.io']
-  },
-  metadata(options) {
-    return options['metadata']
-  },
-  simpleCheckProductOptions() {}
-}
 
 function normalizeReqData(reqData, provider) {
   reqData.id = reqData.id || provider.io.engine.generateId()
@@ -36,13 +15,13 @@ function normalizeReqData(reqData, provider) {
   reqData.timeout = 5000
 }
 
-class MemoryProvider extends Provider {
+class SocketIoProvider extends Provider {
 
   /**
    * @see core/provider$create
    */
-  static create(options) {
-    let provider = new MemoryProvider(options)
+  static create(options, servlet) {
+    let provider = new SocketIoProvider(options, servlet)
     provider.attach()
     return provider
   }
@@ -50,25 +29,16 @@ class MemoryProvider extends Provider {
   /**
    * @see core/provider$createLazy
    */
-  static createLazy(options) {
-    return new MemoryProvider(options)
+  static createLazy(options, servlet) {
+    return new SocketIoProvider(options, servlet)
   }
 
-  /**
-   * @see core/provider$parser
-   */
-  static parser() {
-    return DefaultParser
-  }
-
-  constructor (options) {
-    super()
+  constructor (options, servlet) {
+    super(servlet)
     this.name = "memory-provider"
     this.alive = true // always true
     this.poison = false
     this.options = options
-    this.server = null
-    // this.parser = this.constructor.parser()
     this._setUp()
   }
 
@@ -85,12 +55,11 @@ class MemoryProvider extends Provider {
    */
   attach() {
     if (!this.attached) {
-      const parser = MemoryProvider.parser()
+      const decorator = this.decorator
       const options = this.options
 
-      let port = parser.port(options)
-      let optionsOfSocketIO = parser.socketOptions(options)
-      let server = io(port, optionsOfSocketIO)
+      let port = decorator.port(options)
+      let server = io(port, socketOptions)
 
       debug('starting socket-io server(%s)', port)
       logger.info(this, `attaching socket-io server(${port})...`)
@@ -106,12 +75,16 @@ class MemoryProvider extends Provider {
     }
   }
 
+  supply() {
+    return SocketIoProduct.create(this.decorator.normalize(this.options))
+  }
+
   /**
    * 关闭socket-io
    */
   close() {
     if (this.attached && this.server) {
-      let port = MemoryProvider.parser().port(this.options)
+      let port = this.decorator.port(this.options)
 
       logger.info(this, `closing socket-io server(${port})...`)
       this.server.close(() => {
@@ -121,7 +94,7 @@ class MemoryProvider extends Provider {
   }
 
   metadata() {
-    return MemoryProvider.parser().metadata(this.options)
+    return this.decorator.metadata(this.options)
   }
 
   /**
@@ -146,10 +119,10 @@ class MemoryProvider extends Provider {
   _onConnect(socket) {
     debug('a socket(%s) is connected, binding events', socket.id)
 
-    const parser = MemoryProvider.parser()
+    const decorator = this.decorator
     const options = this.options
 
-    let type = parser.type(options)
+    let type = decorator.type(options)
 
     // socket-io中socket对象默认事件
     socket.on('disconnect', reason => console.log(`断开连接: { socket-id: ${socket.id}, reason: ${reason}}`))
@@ -192,11 +165,8 @@ class MemoryProvider extends Provider {
   }
 
   detail() {
-    return `${this.name}{ port: ${MemoryProvider.parser().port(this.options)}, namespace: ${MemoryProvider.parser().namespace(this.options)}, attached: ${this.attached} }`
+    return `${this.name}{ port: ${this.decorator.port(this.options)}, namespace: ${this.decorator.namespace(this.options)}, attached: ${this.attached} }`
   }
 }
 
-// socket-io.client实现
-MemoryProvider.Product = MemoryProduct
-
-module.exports = MemoryProvider
+module.exports = SocketIoProvider

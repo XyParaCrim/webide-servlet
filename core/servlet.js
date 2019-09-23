@@ -6,9 +6,11 @@ const utils = require('./utils')
 const Provider = require('./provider')
 
 class Servlet {
-  constructor () {
+  constructor (decorator) {
     this.alive = false
     this.attached = false
+    this.decoratorObject = decorator
+    this.factory = Provider
   }
 
   /**
@@ -69,11 +71,21 @@ class Servlet {
   }
 
 
-  providerFactory() {
-    return this.constructor.Provider
+  providerFactory(factory) {
+    if (arguments.length > 0) {
+      this.factory = factory
+    }
+
+    return this.factory
+  }
+
+  /**
+   * 用于传入到不同实现的provider里(暂时:最简单的实现就是仅仅对option的解析)
+   * @return {Object}
+   */
+  decorator() {
+    return this.decoratorObject
   }
 }
-
-Servlet.Provider = Provider
 
 module.exports = Servlet

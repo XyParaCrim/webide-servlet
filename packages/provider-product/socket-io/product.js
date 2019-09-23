@@ -1,6 +1,7 @@
-const Product = require('../../core/product')
+const Product = require('../../../core/product')
 const io = require('socket.io-client')
-const utils = require('../../core/utils')
+const utils = require('../../../core/utils')
+const socketOptions = require('./socket.io-client.json')
 
 // product的元事件
 // 对于通讯事件的黑名单，这些事件只相对于Product本身
@@ -15,45 +16,26 @@ const DEFAULT_OPTIONS = {
   timeout: 10000
 }
 
-const DefaultParser = {
-  url(metadata) {
-    return metadata.url
-  },
-  socketOptions(metadata) {
-    return metadata['socket.io-client']
-  },
-  type(metadata) {
-    return metadata.type
-  }
-}
-
 const poison = new Product()
 
 poison.emit = function () {
   return Promise.reject(Error('This product does not exist'))
 }
 
-class MemoryProduct extends Product {
+class SocketIoProduct extends Product {
   /**
    * @see Product.create
    */
-  static create(metadata) {
-    return new MemoryProduct(metadata)
-  }
-
-  /**
-   * @see Product.parser
-   */
-  static parser() {
-    return DefaultParser
+  static create(options) {
+    return new SocketIoProduct(options)
   }
 
   static poison() {
     return poison
   }
 
-  constructor(metadata) {
-    super(metadata)
+  constructor(options) {
+    super(options)
     this.poison = false
   }
 
@@ -79,13 +61,7 @@ class MemoryProduct extends Product {
       }
     } else {
       // 创建socket-io客户端
-      const parser = MemoryProduct.parser()
-      const metadata = this.metadata
-
-      let url = parser.url(metadata)
-      let socketOptions = parser.socketOptions(metadata)
-
-      this.client = io(url, socketOptions)
+      this.client = io(this.url, socketOptions)
       this.client.once('connect', () => utils.handleIfFunction(callback))
     }
   }
@@ -130,7 +106,7 @@ class MemoryProduct extends Product {
       id: utils.generateId(),
       data: data || {},
       event,
-      type: MemoryProduct.parser().type(this.metadata),
+      type: this.type,
       time: new Date().getTime(),
       timeout: options.timeout
     }
@@ -178,4 +154,4 @@ class MemoryProduct extends Product {
   }
 }
 
-module.exports = MemoryProduct
+module.exports = SocketIoProduct

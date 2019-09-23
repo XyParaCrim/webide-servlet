@@ -1,12 +1,10 @@
-const Servlet = require('../../core/servlet')
-const MemoryProvider = require('./provider')
-const utils = require('../../core/utils')
-const io = require('../../core/io')
-const Debug = require('debug')
+const Servlet = require('../../../core/servlet')
+const utils = require('../../../core/utils')
+const io = require('../../../core/io')
 const path = require('path')
-const logger = require('../../core/logger')
+const logger = require('../../../core/logger')
+const debug = require('debug')('webide-servlet:memory-servlet')
 
-const debug = Debug('webide-servlet:memory-servlet')
 const defaultParser = {
   path(options) {
     return path.resolve(options.cwd, options.filename)
@@ -14,13 +12,12 @@ const defaultParser = {
 }
 
 class MemoryServlet extends Servlet {
-  constructor(options) {
-    super()
+  constructor(options, decorator) {
+    super(decorator)
 
     this.name = "memory-servlet"
     this.alive = true // always true
     this.options = options
-    this.parser = defaultParser
     this.providerMap = {}
     this.providers = []
   }
@@ -34,9 +31,8 @@ class MemoryServlet extends Servlet {
       utils.handleIfFunction(afterAttached)
     } else {
       const options = this.options
-      const parser = this.parser
 
-      let path = parser.path(options)
+      let path = defaultParser.path(options)
 
       debug("loading products file(%s)", path)
 
@@ -62,11 +58,11 @@ class MemoryServlet extends Servlet {
    * @private
    */
   _addLazyProvider(productOptions) {
+    const providerDecorator = this.decorator()
     const providerFactory = this.providerFactory()
-    const providerParser = providerFactory.parser()
     const providerMap = this.providerMap
 
-    let namespace = providerParser.namespace(productOptions)
+    let namespace = providerDecorator.namespace(productOptions)
     let provider = providerMap[namespace]
     if (provider && provider.alive) {
       // 首先处理此namespace下已存在的provider
@@ -77,7 +73,7 @@ class MemoryServlet extends Servlet {
       debug('creating lazy provider(%s)', namespace)
       logger.info(this, `creating lazy provider(${namespace})`)
 
-      provider = providerFactory.createLazy(productOptions)
+      provider = providerFactory.createLazy(productOptions, this)
 
       // check 这个返回的provider是否完好无损的，若是poison则drop it, 维持原provider options
       if (provider.poison) {
@@ -112,11 +108,11 @@ class MemoryServlet extends Servlet {
   getProvider(filterOptions) {
     if (typeof filterOptions === 'object') {
       const providerMap = this.providerMap
-      const providerParser = this.providerFactory().parser()
+      const providerDecorator = this.decorator()
 
       let provider, namespace
 
-      provider = providerMap[namespace = providerParser.namespace(filterOptions)] || utils.get('poison-provider')
+      provider = providerMap[namespace = providerDecorator.namespace(filterOptions)] || utils.get('poison-provider')
 
       provider.poison && logger.error(this, `Unable to query{${namespace}} provider with no-matched options`)
 
@@ -143,9 +139,9 @@ class MemoryServlet extends Servlet {
    */
   provide(options) {
     const providerMap = this.providerMap
-    const providerParser = this.providerFactory().parser()
+    const providerDecorator = this.decorator()
 
-    let namespace = providerParser.namespace(options)
+    let namespace = providerDecorator.namespace(options)
     let provider = providerMap[namespace] || utils.get('poison-provider')
 
     // 首先，检查这个namespace的provider实例是否可用
@@ -171,7 +167,5 @@ class MemoryServlet extends Servlet {
     return `${this.name}{ alive: ${this.alive}, attached: ${this.attached} }`
   }
 }
-
-MemoryServlet.Provider = MemoryProvider
 
 module.exports = MemoryServlet

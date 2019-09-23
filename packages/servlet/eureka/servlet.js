@@ -1,10 +1,10 @@
-const utils = require('../../core/utils')
+const utils = require('../../../core/utils')
 const debug = require('debug')('webide-servlet:eureka-servlet')
-const logger = require('../../core/logger')
+const logger = require('../../../core/logger')
 
-const Servlet = require('../../core/servlet')
+const Servlet = require('../../../core/servlet')
 const Eureka = require('eureka-js-client').Eureka
-const MemoryProvider = require('../memory/provider')
+const MemoryProvider = require('../../provider-product/socket-io/provider')
 
 /**
  * Eureka implement
@@ -35,11 +35,17 @@ class EurekaServlet extends Servlet {
     } else {
       debug('init eureka-client')
 
-      const options = this.options // 默认这就是eureka options
-      const client = this.client = new Eureka(options)
+      let options = this.options // 默认这就是eureka options
+      let client
+
+      try {
+        client = this.client = new Eureka(options)
+      } catch (e) {
+        logger.error(this, "Failed to create eureka-client instance", e, true)
+      }
+
 
       client.logger.level('debug')
-
       client.start(e => {
         if (e) {
           logger.error(this, '无法初始化eureka-client', e, true)
@@ -61,7 +67,7 @@ class EurekaServlet extends Servlet {
 
     const providerFactory = this.providerFactory()
     const client = this.client
-    const provider = this.provider || providerFactory.createLazy(client.config.instance)
+    const provider = this.provider || providerFactory.createLazy(client.config.instance, this)
 
     this._registerWithEureka()
 

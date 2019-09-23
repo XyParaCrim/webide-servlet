@@ -10,11 +10,17 @@ const utils = require('../core/utils')
  * 2. 基于flyweight pattern，为了能够远程快速构造实例
  */
 class Provider extends EventEmitter {
-  constructor() {
+  /**
+   * @param {Servlet} servlet
+   */
+  constructor(servlet) {
     super()
     this.alive = false
     this.poison = true // 子类需要自己声明自己是否可用，默认不可用
     this.attached = false
+    if ((this.servlet = servlet)) {
+      this.decorator = servlet.decorator()
+    }
   }
 
   /**
@@ -53,44 +59,33 @@ class Provider extends EventEmitter {
 
   /**
    * 返回一个与Provider交互的Product实例
-   * @return {Provider.Product}
+   * @return {Product}
    */
   supply() {
-    return this.productFactory().create(this.metadata())
-  }
-
-  productFactory() {
-    return this.constructor.Product
+    utils.unSupportedHandler()
   }
 
   /**
    * 通用工厂方法
    * @param {Object} options
+   * @param {Servlet} servlet
    * @return {Provider}
    */
-  static create(options) {
+  static create(options, servlet) {
     utils.unSupportedHandler()
   }
 
   /**
    * 通用工厂方法 - 实例un-alive
    * @param options
+   * @param {Servlet} servlet
    * @return {Provider}
    */
-  static createLazy(options) {
+  static createLazy(options, servlet) {
     utils.unSupportedHandler()
   }
 
-  /**
-   * 返回解析provider options的parser
-   * @return {Parser}
-   */
-  static parser() {
-    utils.unSupportedHandler()
-  }
 }
-
-Provider.Product = Product
 
 utils.set('poison-provider', new Provider())
 

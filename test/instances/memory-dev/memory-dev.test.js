@@ -1,5 +1,6 @@
 const WebideServlet = require('../../../index')
-const MemoryServlet = require('../../../packages/memory/servlet')
+const MemoryServlet = require('../../../packages/servlet/memory/servlet')
+const SocketIoProvider = require('../../../packages/provider-product/socket-io/provider')
 const utils = require('../../../core/utils')
 
 describe('memory-dev', () => {
@@ -18,7 +19,7 @@ describe('memory-dev', () => {
         /* 测试Api */
 
         // like protected
-        expect(servlet.providerFactory()).toBe(MemoryServlet.Provider)
+        expect(servlet.providerFactory()).toBe(SocketIoProvider)
 
         // public api
         // 获取一个attached provider in provide's side //does not exist
@@ -28,13 +29,12 @@ describe('memory-dev', () => {
 
         let existedProvider = servlet.provide({ "id": "vda", "type": "v2sual" })
         expect(existedProvider.poison).toBeFalsy()
-        expect(existedProvider).toBeInstanceOf(MemoryServlet.Provider)
+        expect(existedProvider).toBeInstanceOf(SocketIoProvider)
 
         // 测试 provider metadata
         let metadata = existedProvider.metadata()
         expect(metadata).not.toBeNull()
         expect(metadata.url).toBe("http://localhost:9595")
-
 
         existedProvider.close()
       })

@@ -3,7 +3,6 @@
     "id": "vda",
     "type": "v2sual",
     "port": 9595,
-    "socket.io": {},
     "metadata": {
       "name": "网银",
       "id": "vda",
@@ -12,10 +11,7 @@
       "ip": "127.0.0.1",
       "port": 9595,
       "httpPort": "3000",
-      "preview": "http://localhost:7007",
-      "socket.io-client": {
-        "reconnectionAttempts": 10
-      }
+      "preview": "http://localhost:7007"
     }
   }
 ]

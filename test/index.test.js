@@ -27,8 +27,8 @@ describe("test WebideServlet.resolveProductFactoryPath", () => {
     return WebideServlet.resolveProductFactoryPath('memory-dev')
       .then(productPath => {
         // 返回的路径和Product class
-        expect(productPath).toBe(path.resolve(__dirname, '../packages/memory/product.js'))
-        expect(require(productPath)).toBe(require('../packages/memory/product'))
+        expect(productPath).toBe(path.resolve(__dirname, '../packages/provider-product/socket-io/product.js'))
+        expect(require(productPath)).toBe(require('../packages/provider-product/socket-io/product'))
       })
   })
 })

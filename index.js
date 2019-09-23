@@ -3,7 +3,8 @@ const Servlet = require('./core/servlet')
 const logger = require('./core/logger')
 
 const INSTANCES_DIR = io.resolve(__dirname, './instances/')
-const PACKAGES_DIR = io.resolve(__dirname, './packages/')
+const SERVLET_DIR = io.resolve(__dirname, './packages/servlet')
+const PROVIDER_PRODUCT_DIR = io.resolve(__dirname, './packages/provider-product')
 
 const INDEX_FILE_NAME = 'index'
 const INSTANCE_JSON_NAME = 'instance'
@@ -27,20 +28,32 @@ module.exports = {
         const createServlet = require(createServletPath)
 
         // 尝试去检查package/${packageName}/servlet.js文件
-        let packageName = instanceOptions.package
-        let packageDir = io.resolveFile(PACKAGES_DIR, packageName)
+        let servletName = instanceOptions['servlet']
+        let providerName = instanceOptions['provide-product']
+        let servletClassDir = io.resolveFile(SERVLET_DIR, servletName)
+        let providerClassDir = io.resolveFile(PROVIDER_PRODUCT_DIR, providerName)
 
-        return io.checkFile(packageDir, 'servlet', 'js')
-          .then(servletPath => {
-            // 创建一个servlet实例
-            let servlet = createServlet(require(servletPath))
-            if (!servlet instanceof Servlet) {
-              throw Error(`Failed to create the servlet{${packageName}: ${packageDir}}`)
-            }
+        return Promise.all([
+          io.checkFile(servletClassDir, 'servlet', 'js'),
+          io.checkFile(providerClassDir, 'provider', 'js')
+        ]).then(([servletPath, providerPath]) => {
+          // 创建一个servlet实例
+          let servlet = createServlet(require(servletPath))
+          if (!servlet instanceof Servlet) {
+            throw Error(`Failed to create the servlet{ ${servletName}: ${servletPath} }`)
+          }
 
-            return new Promise(resolve => servlet.attach(() => resolve(servlet)))
-          })
+          let ProviderFactory = require(providerPath)
+          if (!ProviderFactory) {
+            throw Error(`Failed to load the provider-factory{ ${providerName}: ${providerPath} }`)
+          }
 
+          // 设置provider-factory
+          servlet.providerFactory(ProviderFactory)
+
+          // try attach and resolve it
+          return new Promise(resolve => servlet.attach(() => resolve(servlet)))
+        })
       })
   },
   /**
@@ -62,10 +75,10 @@ module.exports = {
     return io.checkFile(instanceDir, INSTANCE_JSON_NAME, 'json')
       .then(path => {
         let instanceOptions = require(path)
-        let packageName = instanceOptions.package
-        let packageDir = io.resolveFile(PACKAGES_DIR, packageName)
+        let providerName = instanceOptions['provide-product']
+        let providerClassDir = io.resolveFile(PROVIDER_PRODUCT_DIR, providerName)
 
-        return io.checkFile(packageDir, 'product', 'js')
+        return io.checkFile(providerClassDir, 'product', 'js')
       })
   }
 }

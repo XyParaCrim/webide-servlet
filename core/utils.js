@@ -42,6 +42,16 @@ module.exports = {
     }, expire)
 
     return expiredFunction
+  },
+
+  bindProperties(instance, properties) {
+    if (properties) {
+      for (let [name, value] of properties) {
+        if (!Reflect.has(instance, name)) {
+          instance[name] = value
+        }
+      }
+    }
   }
 }
 

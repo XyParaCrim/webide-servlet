@@ -1,3 +1,4 @@
 {
-  "package": "memory"
+  "servlet": "memory",
+  "provide-product": "socket-io"
 }
