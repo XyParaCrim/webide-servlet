@@ -4,6 +4,7 @@ const logger = require('../../../core/logger')
 
 const Servlet = require('../../../core/servlet')
 const Eureka = require('eureka-js-client').Eureka
+const portFinder = require('portfinder')
 
 /**
  * Eureka implement
@@ -71,11 +72,20 @@ class EurekaServlet extends Servlet {
       const client = this.client
 
       this.provider = providerFactory.createLazy(client.config.instance, this)
-      this._resolveEurekaInstanceData(metadata)
-      this._registerWithEureka()
     }
 
-    this.provider.attach()
+    if (!this.provider.attached) {
+      portFinder.getPort((err, port) => {
+        if (err) {
+          logger.error(this, "没有可用的端口", err, true)
+        } else {
+          metadata.service = port
+          this._resolveEurekaInstanceData(metadata)
+          this._registerWithEureka()
+          this.provider.attach()
+        }
+      })
+    }
 
     return this.provider
   }

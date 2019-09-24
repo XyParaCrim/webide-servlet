@@ -62,7 +62,7 @@ class SocketIoProvider extends Provider {
       const decorator = this.decorator
       const options = this.options
 
-      let port = decorator.service(options)
+      let port = decorator.port(options)
       let server = io(port, socketOptions)
 
       debug('starting socket-io server(%s)', port)
@@ -88,7 +88,7 @@ class SocketIoProvider extends Provider {
    */
   close() {
     if (this.attached && this.server) {
-      let port = this.decorator.service(this.options)
+      let port = this.decorator.port(this.options)
 
       logger.info(this, `closing socket-io server(${port})...`)
       this.server.close(() => {
@@ -169,7 +169,7 @@ class SocketIoProvider extends Provider {
   }
 
   detail() {
-    return `${this.name}{ port: ${this.decorator.service(this.options)}, namespace: ${this.decorator.namespace(this.options)}, attached: ${this.attached} }`
+    return `${this.name}{ port: ${this.decorator.port(this.options)}, namespace: ${this.decorator.namespace(this.options)}, attached: ${this.attached} }`
   }
 }
 

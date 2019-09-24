@@ -6,7 +6,7 @@ module.exports = {
     return options.type
   },
   port(options) {
-    return options.port
+    return options.service
   },
   namespace(options) {
     return options.id + '#' + options.type
