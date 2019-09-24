@@ -6,10 +6,10 @@
 
 #### 2019.9.18
 
-    - [未开始]在Product端, 获取的值Api，以及考虑不同的存储方式（cookie，etc）
-    - [支持中...]在Provider端，设置、更新、删除的值的Api设计
-    - [支持中...]日志报告或者足够的运行、开发信息展示
-    - [未开始]怎么表达让外部直到未attach的时刻
+    - [支持中...]在Product端, 获取的值Api，以及考虑不同的存储方式（cookie，etc）-> decorator pattern
+    - [支持中...]在Provider端，设置、更新、删除的值的Api设计 -> 缺少删除接口
+    - [支持中...]日志报告或者足够的运行、开发信息展示 -> 不完整、略混乱
+    - [支持中...]怎么表达让外部直到未attach的时刻 -> 典型的错误作为callback的参数
     - [未开始]完善Servlet、Product、Provider的状态表达
     - [未开始]属性之间的关系（严重）
     - [未开始]在Servlet里，合理映射Provider，满足不同查询（type，id，pid， etc）
