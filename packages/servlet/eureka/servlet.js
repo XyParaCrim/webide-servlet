@@ -81,7 +81,7 @@ class EurekaServlet extends Servlet {
   _resolveEurekaInstanceData(metadata) {
     const instance = this.client.config.instance
 
-    instance.app = metadata.name
+    instance.app = metadata.id
     instance.vipAddress = metadata.type
     instance.hostName = instance.ipAddr = '127.0.0.1'
     instance.port = { '$': 8080, '@enabled': true }
@@ -109,9 +109,20 @@ class EurekaServlet extends Servlet {
     }
   }
 
-  supply(filterOptions) {
-    utils.unSupportedHandler()
+  supply(id) {
     this._validateAttached()
+
+    const productInfo = this.client.getInstancesByAppId(id)
+    if (productInfo.length === 0) {
+      logger.error(this, `没有找到项目: ${id}`)
+      return utils.get('poison-provider')
+    }
+
+    if (productInfo.length > 1) {
+      logger.warn(this, `有${productInfo.length}个相同Id的项目，返回第一个: ${id}`)
+    }
+
+    return this.providerFactory().createProduct(productInfo[0])
   }
 
   detail() {
@@ -122,6 +133,12 @@ class EurekaServlet extends Servlet {
     this._validateAttached()
 
     return this.client.getInstancesByVipAddress(type).map(this.decorator().normalize)
+  }
+
+  autoUpdateProductInfo() {
+    this._validateAttached()
+
+    this.client.registryFetch && this.client.startRegistryFetches()
   }
 }
 

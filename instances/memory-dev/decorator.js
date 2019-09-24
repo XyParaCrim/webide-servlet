@@ -9,16 +9,16 @@ module.exports = {
     return options.port
   },
   namespace(options) {
-    return '#' + options.type + options.id
+    return options.id + '#' + options.type
   },
   metadata(options) {
-    return options.metadata
+    return options
   },
   normalize(options) {
     return {
-      url: "http://localhost:" + options.port,
+      url: options.host + ":" + options.port,
       type: options.type,
-      metadata: options.metadata
+      metadata: options
     }
   }
 }

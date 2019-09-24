@@ -1,17 +1,26 @@
 [
   {
-    "id": "vda",
+    "id": "v2sual",
     "type": "v2sual",
-    "port": 9595,
-    "metadata": {
-      "name": "网银",
-      "id": "vda",
-      "type": "v2sual",
-      "url": "http://localhost:9595",
-      "ip": "127.0.0.1",
-      "port": 9595,
-      "httpPort": "3000",
-      "preview": "http://localhost:7007"
-    }
+    "name": "网银",
+    "port": "3000",
+    "host": "localhost",
+    "preview": "http://localhost:7007"
+  },
+  {
+    "id": "ad",
+    "type": "ad",
+    "name": "广告投放",
+    "port": "3005",
+    "host": "localhost",
+    "preview": "http://localhost:7033"
+  },
+  {
+    "id": "vda",
+    "type": "ad",
+    "name": "VDA大屏",
+    "port": "3006",
+    "host": "localhost",
+    "preview": "http://localhost:7033"
   }
 ]

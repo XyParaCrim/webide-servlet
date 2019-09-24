@@ -147,6 +147,10 @@ class SocketIoProduct extends Product {
     })
   }
 
+  get(key) {
+    return this.metadata[key]
+  }
+
   on(event) {
     if (this.attacted) {
       events.has(event) ? super.on.apply(this, arguments) : this.client.on.apply(this.client, arguments)

@@ -45,7 +45,7 @@ class Product extends EventEmitter {
    * @param key
    */
   get(key) {
-    // TODO
+    utils.unSupportedHandler()
   }
 
   /**

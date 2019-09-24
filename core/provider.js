@@ -85,6 +85,13 @@ class Provider extends EventEmitter {
     utils.unSupportedHandler()
   }
 
+  /**
+   * 通用Product工厂方法,对应Product.create
+   * @param info
+   */
+  static createProduct(info) {
+    utils.unSupportedHandler()
+  }
 }
 
 utils.set('poison-provider', new Provider())

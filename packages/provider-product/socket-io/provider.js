@@ -33,6 +33,10 @@ class SocketIoProvider extends Provider {
     return new SocketIoProvider(options, servlet)
   }
 
+  static createProduct(info) {
+    return SocketIoProduct(info)
+  }
+
   constructor (options, servlet) {
     super(servlet)
     this.name = "memory-provider"
@@ -76,7 +80,7 @@ class SocketIoProvider extends Provider {
   }
 
   supply() {
-    return SocketIoProduct.create(this.decorator.normalize(this.options))
+    return SocketIoProvider.createProduct.create(this.decorator.normalize(this.options))
   }
 
   /**
@@ -167,6 +171,11 @@ class SocketIoProvider extends Provider {
   detail() {
     return `${this.name}{ port: ${this.decorator.port(this.options)}, namespace: ${this.decorator.namespace(this.options)}, attached: ${this.attached} }`
   }
+}
+
+// TODO
+SocketIoProvider.createProduct = function (info) {
+  return SocketIoProduct.create(info)
 }
 
 module.exports = SocketIoProvider

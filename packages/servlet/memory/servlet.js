@@ -162,6 +162,8 @@ class MemoryServlet extends Servlet {
     return provider
   }
 
+  autoUpdateProductInfo() {}
+
   detail() {
     return `${this.name}{ alive: ${this.alive}, attached: ${this.attached} }`
   }

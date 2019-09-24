@@ -89,6 +89,13 @@ class Servlet {
   }
 
   /**
+   * 是否自动更新ProductInfo
+   */
+  autoUpdateProductInfo() {
+    utils.unSupportedHandler()
+  }
+
+  /**
    * 用于传入到不同实现的provider里(暂时:最简单的实现就是仅仅对option的解析)
    * @return {Object}
    */
