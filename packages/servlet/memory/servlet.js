@@ -99,7 +99,7 @@ class MemoryServlet extends Servlet {
   getProductInfo(type) {
     // 返回所有metadata
     if (arguments.length === 0) {
-      return this.providers.map(product => product.metadata())
+      return this.providers.map(product => product.productInfo())
     }
   }
 

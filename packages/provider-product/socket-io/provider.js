@@ -80,7 +80,7 @@ class SocketIoProvider extends Provider {
   }
 
   supply() {
-    return SocketIoProvider.createProduct.create(this.decorator.normalize(this.options))
+    return SocketIoProvider.createProduct(this.decorator.normalize(this.options))
   }
 
   /**
@@ -99,6 +99,10 @@ class SocketIoProvider extends Provider {
 
   metadata() {
     return this.decorator.metadata(this.options)
+  }
+
+  productInfo() {
+    return this.decorator.normalize(this.options)
   }
 
   /**
