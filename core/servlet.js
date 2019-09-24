@@ -7,6 +7,10 @@ const Provider = require('./provider')
 
 class Servlet {
   constructor (decorator) {
+    if (!decorator) {
+      throw TypeError("缺少参数-decorator")
+    }
+
     this.alive = false
     this.attached = false
     this.decoratorObject = decorator

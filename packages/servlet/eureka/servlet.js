@@ -15,9 +15,10 @@ class EurekaServlet extends Servlet {
   /**
    * eureka-js-client options
    * @param options
+   * @param decorator
    */
-  constructor(options) {
-    super()
+  constructor(options, decorator) {
+    super(decorator)
 
     this.name = 'eureka-servlet'
     this.alive = true
@@ -74,6 +75,8 @@ class EurekaServlet extends Servlet {
       this._registerWithEureka()
     }
 
+    this.provider.attach()
+
     return this.provider
   }
 
@@ -122,7 +125,7 @@ class EurekaServlet extends Servlet {
       logger.warn(this, `有${productInfo.length}个相同Id的项目，返回第一个: ${id}`)
     }
 
-    return this.providerFactory().createProduct(productInfo[0])
+    return this.providerFactory().createProduct(this.decorator().normalize(productInfo[0])) // TODO
   }
 
   detail() {
@@ -132,13 +135,27 @@ class EurekaServlet extends Servlet {
   getProductInfo(type) {
     this._validateAttached()
 
-    return this.client.getInstancesByVipAddress(type).map(this.decorator().normalize)
+    if (typeof type === "string") {
+      return this.client.getInstancesByVipAddress(type).map(this.decorator().normalize)
+    } else {
+      let cache = this.client.cache.app
+      let productInfo = []
+
+      for(let instances of Object.values(cache)) {
+        if (instances && instances.length) {
+          productInfo.push.apply(productInfo, instances)
+        }
+      }
+
+      return productInfo.map(this.decorator().normalize) // TODO
+    }
   }
 
   autoUpdateProductInfo() {
     this._validateAttached()
 
-    this.client.registryFetch && this.client.startRegistryFetches()
+    this.client.registryFetch || this.client.startRegistryFetches()
+    this.client.fetchRegistry()
   }
 }
 

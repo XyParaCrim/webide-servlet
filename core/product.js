@@ -15,7 +15,9 @@ class Product extends EventEmitter {
     super()
     this.poison = true
     this.attacted = false
-    utils.bindProperties(this, options)
+    if (options) {
+      utils.bindProperties(this, Object.entries(options))
+    }
   }
 
   /**

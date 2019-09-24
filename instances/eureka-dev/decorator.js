@@ -16,8 +16,9 @@ module.exports = {
   },
   normalize(options) {
     return {
+      id: options.metadata.id,
       url: options.hostName + ":" + options.metadata.port,
-      type:  options.metadata.type,
+      type:  options.metadata.type.toLocaleLowerCase(),
       metadata: options.metadata
     }
   }
