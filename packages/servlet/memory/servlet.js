@@ -96,8 +96,7 @@ class MemoryServlet extends Servlet {
     return this.getProvider(filterOptions).metadata()
   }
 
-  // TODO
-  batchMetadata(type) {
+  getProductInfo(type) {
     // 返回所有metadata
     if (arguments.length === 0) {
       return this.providers.map(product => product.metadata())

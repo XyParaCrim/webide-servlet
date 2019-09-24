@@ -4,7 +4,6 @@ const logger = require('../../../core/logger')
 
 const Servlet = require('../../../core/servlet')
 const Eureka = require('eureka-js-client').Eureka
-const MemoryProvider = require('../../provider-product/socket-io/provider')
 
 /**
  * Eureka implement
@@ -62,16 +61,32 @@ class EurekaServlet extends Servlet {
   /**
    * 只支持单个进程单个服务注册，所以始终返回一个provider对象
    */
-  provide(options) {
+  provide(metadata) {
     this._validateAttached()
 
     const providerFactory = this.providerFactory()
-    const client = this.client
-    const provider = this.provider || providerFactory.createLazy(client.config.instance, this)
 
-    this._registerWithEureka()
+    if (!this.provider) {
+      const client = this.client
 
-    return provider
+      this.provider = providerFactory.createLazy(client.config.instance, this)
+      this._resolveEurekaInstanceData(metadata)
+      this._registerWithEureka()
+    }
+
+    return this.provider
+  }
+
+  // TODO
+  _resolveEurekaInstanceData(metadata) {
+    const instance = this.client.config.instance
+
+    instance.app = metadata.name
+    instance.vipAddress = metadata.type
+    instance.hostName = instance.ipAddr = '127.0.0.1'
+    instance.port = { '$': 8080, '@enabled': true }
+    instance.dataCenterInfo = { name: 'MyOwn', '@class': 'com.netflix.appinfo.InstanceInfo$DefaultDataCenterInfo' }
+    instance.metadata = metadata
   }
 
   _registerWithEureka() {
@@ -95,12 +110,19 @@ class EurekaServlet extends Servlet {
   }
 
   supply(filterOptions) {
+    utils.unSupportedHandler()
+    this._validateAttached()
+  }
+
+  detail() {
+    return `${this.name}{ alive: ${this.alive}, attached: ${this.attached} }`
+  }
+
+  getProductInfo(type) {
     this._validateAttached()
 
-    console.log(this.client.cache.app[0])
+    return this.client.getInstancesByVipAddress(type).map(this.decorator().normalize)
   }
 }
-
-EurekaServlet.Provider = MemoryProvider
 
 module.exports = EurekaServlet

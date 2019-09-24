@@ -70,6 +70,15 @@ class Servlet {
     utils.unSupportedHandler()
   }
 
+  /**
+   * 返回已注册的product数据数组
+   * @param type
+   * @return {Array<JSON>}
+   */
+  getProductInfo(type) {
+    utils.unSupportedHandler()
+  }
+
 
   providerFactory(factory) {
     if (arguments.length > 0) {

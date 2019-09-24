@@ -1,20 +1,4 @@
-instance:
-  app: webide-service
-  hostName: 127.0.0.1
-  ipAddr: 127.0.0.1
-  port:
-    '$': 8080
-    '@enabled': true
-  vipAddress: webide-service
-  dataCenterInfo:
-    name: 'MyOwn'
-    '@class': 'com.netflix.appinfo.InstanceInfo$DefaultDataCenterInfo'
-  metadata:
-    id: "netbank"
-    name: "网银"
-    type: "v2sual"
-    ip: "localhost:xxxx"
-    xx: "hhh"
+instance: {}
 eureka:
   host: localhost
   port: 9528

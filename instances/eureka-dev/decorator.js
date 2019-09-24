@@ -1,23 +1,23 @@
 module.exports = {
   id: function (options) {
-    return options.id
+    return options.metadata.id
   },
   type(options) {
-    return options.type
+    return options.metadata.type
   },
   port(options) {
-    return options.port
+    return options.metadata.port
   },
   namespace(options) {
-    return '#' + options.type + options.id
+    return options.metadata.type + '#' + options.metadata.id
   },
   metadata(options) {
     return options.metadata
   },
   normalize(options) {
     return {
-      url: "http://localhost:" + options.port,
-      type: options.type,
+      url: options.hostName + options.metadata.port,
+      type:  options.metadata.type,
       metadata: options.metadata
     }
   }
