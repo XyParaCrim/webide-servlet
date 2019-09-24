@@ -17,7 +17,7 @@ module.exports = {
   normalize(options) {
     return {
       id: options.id,
-      url: options.host + ":" + options.port,
+      url: options.host + ":" + options.service,
       type: options.type,
       metadata: options
     }

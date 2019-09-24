@@ -4,6 +4,7 @@
     "type": "v2sual",
     "name": "网银",
     "port": "3000",
+    "service": "3100",
     "host": "localhost",
     "preview": "http://localhost:7007"
   },
@@ -12,6 +13,7 @@
     "type": "ad",
     "name": "广告投放",
     "port": "3005",
+    "service": "3105",
     "host": "localhost",
     "preview": "http://localhost:7033"
   },
@@ -20,6 +22,7 @@
     "type": "ad",
     "name": "VDA大屏",
     "port": "3006",
+    "service": "3106",
     "host": "localhost",
     "preview": "http://localhost:7033"
   }
