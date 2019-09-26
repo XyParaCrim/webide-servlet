@@ -4,17 +4,19 @@
  */
 const utils = require('./utils')
 const Provider = require('./provider')
+const defaultDecorator = require('./decorator')
 
 class Servlet {
-  constructor (decorator) {
+  constructor (decorator, options) {
     if (!decorator) {
       throw TypeError("缺少参数-decorator")
     }
 
     this.alive = false
     this.attached = false
-    this.decoratorObject = decorator
     this.factory = Provider
+    this.decoratorObject = utils.mergeDecorator(decorator, defaultDecorator)
+    utils.bindProperties(this, options)
   }
 
   /**
@@ -35,7 +37,7 @@ class Servlet {
   /**
    * 根据提供的筛选条件，返回结果，且结果非空({Servlet.Provider}的委托函数)
    * @param filterOptions
-   * @returns {Servlet.Provider.Product}
+   * @returns {Product}
    */
   supply(filterOptions) {
     utils.unSupportedHandler()
@@ -44,7 +46,7 @@ class Servlet {
   /**
    * 如果提供type则筛选，反之，则返回所有的products
    * @param type
-   * @returns {Array<Servlet.Provider.Product>}
+   * @returns {Array<Product>}
    */
   supplies(type) {
     utils.unSupportedHandler()
@@ -52,10 +54,11 @@ class Servlet {
 
   /**
    * 注册product，返回一个provider实例
-   * @param options
-   * @return {Servlet.Provider}
+   * @param metadata
+   * @param options 可选参数，根据不同实现传入
+   * @return {Provider}
    */
-  provide(options) {
+  provide(metadata, options) {
     utils.unSupportedHandler()
   }
 
@@ -79,7 +82,7 @@ class Servlet {
    * @param type
    * @return {Array<JSON>}
    */
-  getProductInfo(type) {
+  productInfo(type) {
     utils.unSupportedHandler()
   }
 

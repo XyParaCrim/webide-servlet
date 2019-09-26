@@ -11,12 +11,12 @@ const utils = require('../core/utils')
  */
 class Product extends EventEmitter {
 
-  constructor(options) {
+  constructor(productInfo) {
     super()
     this.poison = true
     this.attacted = false
-    if (options) {
-      utils.bindProperties(this, Object.entries(options))
+    if (productInfo) {
+      utils.bindProperties(this, productInfo)
     }
   }
 
@@ -59,10 +59,10 @@ class Product extends EventEmitter {
 
   /**
    * 通用工厂方法
-   * @param {Object} options
+   * @param {Object} productInfo
    * @return {Product}
    */
-  static create(options) {
+  static create(productInfo) {
     return utils.get('poison-provider')
   }
 

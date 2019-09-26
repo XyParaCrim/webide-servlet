@@ -1,3 +1,5 @@
 module.exports = {
-  EmptyArray: Object.freeze([])
+  EmptyArray: Object.freeze([]),
+
+  DefaultServiceType: 'unknown-service'
 }

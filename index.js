@@ -13,9 +13,10 @@ module.exports = {
   /**
    * 输入实例名称获取不同的servlet实例
    * @param instanceName 即/instances/${instanceName}
+   * @param options 绑在servlet对象上的属性值
    * @returns {Promise<Servlet>}
    */
-  load(instanceName) {
+  load(instanceName, options) {
     // resolve 创建函数路径
     const instanceDir = io.resolve(INSTANCES_DIR, instanceName)
     const checkInstancesJson = io.checkFile(instanceDir, INSTANCE_JSON_NAME, 'json')
@@ -38,7 +39,7 @@ module.exports = {
           io.checkFile(providerClassDir, 'provider', 'js')
         ]).then(([servletPath, providerPath]) => {
           // 创建一个servlet实例
-          let servlet = createServlet(require(servletPath))
+          let servlet = createServlet(require(servletPath), options)
           if (!servlet instanceof Servlet) {
             throw Error(`Failed to create the servlet{ ${servletName}: ${servletPath} }`)
           }

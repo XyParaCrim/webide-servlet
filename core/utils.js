@@ -16,7 +16,7 @@ module.exports = {
   },
 
   unSupportedHandler() {
-    throw Error() // TODO
+    throw Error("This method is not yet supported.")
   },
 
   resolveIteratorValues(iterator) {
@@ -46,11 +46,35 @@ module.exports = {
 
   bindProperties(instance, properties) {
     if (properties) {
-      for (let [name, value] of properties) {
+      for (let [name, value] of Object.entries(properties)) {
         if (!Reflect.has(instance, name)) {
           instance[name] = value
         }
       }
+    }
+  },
+
+  mergeDecorator(decorator, defaultDecorator) {
+    return decorator ? Object.assign({}, defaultDecorator, decorator) : Object.assign({}, defaultDecorator)
+  },
+
+  /* some validate function */
+
+  validateConstructor(value, Constructor, message) {
+    if (value == null || !(value instanceof Constructor)) {
+      throw TypeError(message)
+    }
+  },
+
+  validateNotNull(value, message) {
+    if (value == null) {
+      throw TypeError(message)
+    }
+  },
+
+  validateString(value, message) {
+    if (!(typeof value === 'string')) {
+      throw TypeError(message)
     }
   }
 }

@@ -4,6 +4,7 @@ const io = require('../../../core/io')
 const path = require('path')
 const logger = require('../../../core/logger')
 const debug = require('debug')('webide-servlet:memory-servlet')
+const defaultDecorator = require('./decorator')
 
 const defaultParser = {
   path(options) {
@@ -13,7 +14,7 @@ const defaultParser = {
 
 class MemoryServlet extends Servlet {
   constructor(options, decorator) {
-    super(decorator)
+    super(utils.mergeDecorator(decorator, defaultDecorator))
 
     this.name = "memory-servlet"
     this.alive = true // always true

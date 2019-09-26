@@ -11,15 +11,19 @@ const utils = require('../core/utils')
  */
 class Provider extends EventEmitter {
   /**
-   * @param {Servlet} servlet
+   * @param {Object} providerInfo 将此对象的properties绑在provider实例上
+   * @param {Servlet} servlet 创建provider的servlet
    */
-  constructor(servlet) {
+  constructor(providerInfo, servlet) {
     super()
     this.alive = false
     this.poison = true // 子类需要自己声明自己是否可用，默认不可用
     this.attached = false
     if ((this.servlet = servlet)) {
       this.decorator = servlet.decorator()
+    }
+    if (providerInfo) {
+      utils.bindProperties(this, providerInfo)
     }
   }
 
@@ -42,18 +46,19 @@ class Provider extends EventEmitter {
   }
 
   /**
-   * 返回product的元数据
-   */
-  metadata() {
-    utils.unSupportedHandler()
-  }
-
-  /**
    * 设置元数据，参数key-value，也可以是对象
    * @param key
    * @param value
    */
   set(key, value) {
+    utils.unSupportedHandler()
+  }
+
+  /**
+   * 根据key获取元数据
+   * @param key
+   */
+  get(key) {
     utils.unSupportedHandler()
   }
 
@@ -67,29 +72,29 @@ class Provider extends EventEmitter {
 
   /**
    * 通用工厂方法
-   * @param {Object} options
+   * @param {Object} providerInfo
    * @param {Servlet} servlet
    * @return {Provider}
    */
-  static create(options, servlet) {
+  static create(providerInfo, servlet) {
     utils.unSupportedHandler()
   }
 
   /**
    * 通用工厂方法 - 实例un-alive
-   * @param options
+   * @param {Object} providerInfo
    * @param {Servlet} servlet
    * @return {Provider}
    */
-  static createLazy(options, servlet) {
+  static createLazy(providerInfo, servlet) {
     utils.unSupportedHandler()
   }
 
   /**
    * 通用Product工厂方法,对应Product.create
-   * @param info
+   * @param productInfo
    */
-  static createProduct(info) {
+  static createProduct(productInfo) {
     utils.unSupportedHandler()
   }
 }

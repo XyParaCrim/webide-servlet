@@ -4,7 +4,7 @@ const logger = require('../../../core/logger')
 
 const Servlet = require('../../../core/servlet')
 const Eureka = require('eureka-js-client').Eureka
-const portFinder = require('portfinder')
+const defaultDecorator = require('./decorator')
 
 /**
  * Eureka implement
@@ -18,12 +18,11 @@ class EurekaServlet extends Servlet {
    * @param options
    * @param decorator
    */
-  constructor(options, decorator) {
-    super(decorator)
+  constructor(decorator, options) {
+    super(utils.mergeDecorator(decorator, defaultDecorator), options)
 
-    this.name = 'eureka-servlet'
+    this.name = this.name || 'eureka-servlet'
     this.alive = true
-    this.options = options
     this.provider = null
   }
 
@@ -36,17 +35,18 @@ class EurekaServlet extends Servlet {
     } else {
       debug('init eureka-client')
 
-      let options = this.options // 默认这就是eureka options
+      let eurekaOptions = this.eurekaOptions // 默认这就是eureka options
       let client
 
       try {
-        client = this.client = new Eureka(options)
+        client = this.client = new Eureka(eurekaOptions)
       } catch (e) {
         logger.error(this, "Failed to create eureka-client instance", e, true)
       }
 
+      logger.info(this, 'set eureka-client logger level: ' + this.eurekaLoggerLevel)
 
-      client.logger.level('debug')
+      client.logger.level(this.eurekaLoggerLevel)
       client.start(e => {
         if (e) {
           logger.error(this, '无法初始化eureka-client', e, true)
@@ -63,43 +63,28 @@ class EurekaServlet extends Servlet {
   /**
    * 只支持单个进程单个服务注册，所以始终返回一个provider对象
    */
-  provide(metadata) {
+  provide(metadata, options) {
     this._validateAttached()
 
+    const client = this.client
+    const decorator = this.decorator()
     const providerFactory = this.providerFactory()
+    const eurekaInstanceConfig = client.config.instance
 
     if (!this.provider) {
-      const client = this.client
+      decorator.normalizeEurekaInstanceConfig(metadata, eurekaInstanceConfig, this)
 
-      this.provider = providerFactory.createLazy(client.config.instance, this)
+      // 创建一个un-attach的provider对象
+        this.provider = providerFactory
+          .createLazy(decorator.normalizeProviderInfo(eurekaInstanceConfig, this, options))
     }
 
     if (!this.provider.attached) {
-      portFinder.getPort((err, port) => {
-        if (err) {
-          logger.error(this, "没有可用的端口", err, true)
-        } else {
-          metadata.service = port
-          this._resolveEurekaInstanceData(metadata)
-          this._registerWithEureka()
-          this.provider.attach()
-        }
-      })
+      this._registerWithEureka()
+      this.provider.attach()
     }
 
     return this.provider
-  }
-
-  // TODO
-  _resolveEurekaInstanceData(metadata) {
-    const instance = this.client.config.instance
-
-    instance.app = metadata.id
-    instance.vipAddress = metadata.type
-    instance.hostName = instance.ipAddr = '127.0.0.1'
-    instance.port = { '$': 8080, '@enabled': true }
-    instance.dataCenterInfo = { name: 'MyOwn', '@class': 'com.netflix.appinfo.InstanceInfo$DefaultDataCenterInfo' }
-    instance.metadata = metadata
   }
 
   _registerWithEureka() {
@@ -107,6 +92,7 @@ class EurekaServlet extends Servlet {
       if (e) {
         logger.error(this, 'Unable to register instance', e)
       } else {
+        logger.info(this, "register successfully")
         this._heartBeats()
       }
     })
@@ -123,8 +109,11 @@ class EurekaServlet extends Servlet {
   }
 
   supply(id) {
+    utils.unSupportedHandler()
+
     this._validateAttached()
 
+    const decorator = this.decorator()
     const productInfo = this.client.getInstancesByAppId(id)
     if (productInfo.length === 0) {
       logger.error(this, `没有找到项目: ${id}`)
@@ -135,30 +124,35 @@ class EurekaServlet extends Servlet {
       logger.warn(this, `有${productInfo.length}个相同Id的项目，返回第一个: ${id}`)
     }
 
-    return this.providerFactory().createProduct(this.decorator().normalize(productInfo[0])) // TODO
+    return this.providerFactory()
+      .createProduct(decorator.normalizeProductInfo(productInfo[0], this))
   }
 
   detail() {
     return `${this.name}{ alive: ${this.alive}, attached: ${this.attached} }`
   }
 
-  getProductInfo(type) {
+  productInfo(productType) {
     this._validateAttached()
 
+    let cache = this.client.cache.app
+    let instancesConfig = []
+    let match = () => true
+    let prefix = productType + "-"
+
+    // 根据productType筛选，不是serviceType
     if (typeof type === "string") {
-      return this.client.getInstancesByVipAddress(type).map(this.decorator().normalize)
-    } else {
-      let cache = this.client.cache.app
-      let productInfo = []
-
-      for(let instances of Object.values(cache)) {
-        if (instances && instances.length) {
-          productInfo.push.apply(productInfo, instances)
-        }
-      }
-
-      return productInfo.map(this.decorator().normalize) // TODO
+      match = name => name.startsWith(prefix)
     }
+
+    for(let [name, instances] of Object.entries(cache)) {
+      if (instances && instances.length && match(name)) {
+        instancesConfig.push.apply(instancesConfig, instances)
+      }
+    }
+
+    const decorator = this.decorator()
+    return instancesConfig.map(decorator.normalizeProductInfo.bind(decorator))
   }
 
   autoUpdateProductInfo() {

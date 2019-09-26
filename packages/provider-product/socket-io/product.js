@@ -26,16 +26,16 @@ class SocketIoProduct extends Product {
   /**
    * @see Product.create
    */
-  static create(options) {
-    return new SocketIoProduct(options)
+  static create(productInfo) {
+    return new SocketIoProduct(productInfo)
   }
 
   static poison() {
     return poison
   }
 
-  constructor(options) {
-    super(options)
+  constructor(productInfo) {
+    super(productInfo)
     this.poison = false
   }
 

@@ -18,31 +18,33 @@ function normalizeReqData(reqData, provider) {
 class SocketIoProvider extends Provider {
 
   /**
-   * @see core/provider$create
+   * @see Provider.create
    */
-  static create(options, servlet) {
-    let provider = new SocketIoProvider(options, servlet)
+  static create(providerInfo, servlet) {
+    let provider = new SocketIoProvider(providerInfo, servlet)
     provider.attach()
     return provider
   }
 
   /**
-   * @see core/provider$createLazy
+   * @see Provider.createLazy
    */
-  static createLazy(options, servlet) {
-    return new SocketIoProvider(options, servlet)
+  static createLazy(providerInfo, servlet) {
+    return new SocketIoProvider(providerInfo, servlet)
   }
 
-  static createProduct(info) {
-    return SocketIoProduct(info)
+  /**
+   * @see Provider.createProduct
+   */
+  static createProduct(productInfo) {
+    return new SocketIoProduct(productInfo)
   }
 
-  constructor (options, servlet) {
-    super(servlet)
+  constructor (providerInfo, servlet) {
+    super(providerInfo, servlet)
     this.name = "memory-provider"
     this.alive = true // always true
     this.poison = false
-    this.options = options
     this._setUp()
   }
 
@@ -59,50 +61,39 @@ class SocketIoProvider extends Provider {
    */
   attach() {
     if (!this.attached) {
-      const decorator = this.decorator
-      const options = this.options
-
-      let port = decorator.port(options)
-      let server = io(port, socketOptions)
+      let socketServer = io(this.server, socketOptions)
+      let port = this.port
 
       debug('starting socket-io server(%s)', port)
       logger.info(this, `attaching socket-io server(${port})...`)
 
       // TODO 不是有效绑定
-      this.server = server
+      this.socketServer = socketServer
       this.alive = this.attached = true
 
       // 此事件挂在namespace上，namespace只有一个connection事件
-      server.on('connection', this._onConnect)
+      socketServer.on('connection', this._onConnect)
 
       logger.info(this, "start socket.io server: " + port)
     }
   }
 
   supply() {
-    return SocketIoProvider.createProduct(this.decorator.normalize(this.options))
+    return SocketIoProvider.createProduct(this.productInfo)
   }
 
   /**
    * 关闭socket-io
    */
   close() {
-    if (this.attached && this.server) {
-      let port = this.decorator.port(this.options)
+    if (this.attached && this.socketServer) {
+      let port = this.port
 
       logger.info(this, `closing socket-io server(${port})...`)
-      this.server.close(() => {
+      this.socketServer.close(() => {
         logger.info(this, `closed socket-io server(${port})...`)
       })
     }
-  }
-
-  metadata() {
-    return this.decorator.metadata(this.options)
-  }
-
-  productInfo() {
-    return this.decorator.normalize(this.options)
   }
 
   /**
@@ -120,17 +111,20 @@ class SocketIoProvider extends Provider {
   }
 
   /**
+   * @see Provider.get
+   */
+  get(key) {
+    return this.metadata[key]
+  }
+
+  /**
    * socket-io event(这里的实现和webide一摸一样)
    * @param socket
    * @private
    */
   _onConnect(socket) {
+    logger.info(this, `a socket(${socket.id}) is connected, binding events`)
     debug('a socket(%s) is connected, binding events', socket.id)
-
-    const decorator = this.decorator
-    const options = this.options
-
-    let type = decorator.type(options)
 
     // socket-io中socket对象默认事件
     socket.on('disconnect', reason => console.log(`断开连接: { socket-id: ${socket.id}, reason: ${reason}}`))
@@ -138,7 +132,7 @@ class SocketIoProvider extends Provider {
     socket.on('disconnecting', reason => console.log(`正在断开连接中: { socket-id: ${socket.id}, reason: ${reason}}`))
 
     // 主要交互事件
-    socket.on(type, (reqData, callback) => {
+    socket.on(this.type, (reqData, callback) => {
       normalizeReqData(reqData)
 
       let event = reqData.event
@@ -173,13 +167,8 @@ class SocketIoProvider extends Provider {
   }
 
   detail() {
-    return `${this.name}{ port: ${this.decorator.port(this.options)}, namespace: ${this.decorator.namespace(this.options)}, attached: ${this.attached} }`
+    return `${this.name}{ port: ${this.port}, namespace: ${this.namespace}, attached: ${this.attached} }`
   }
-}
-
-// TODO
-SocketIoProvider.createProduct = function (info) {
-  return SocketIoProduct.create(info)
 }
 
 module.exports = SocketIoProvider
