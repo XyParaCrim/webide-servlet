@@ -62,6 +62,7 @@ class EurekaServlet extends Servlet {
 
   /**
    * 只支持单个进程单个服务注册，所以始终返回一个provider对象
+   * @see Servlet.prototype.provide
    */
   provide(metadata, options) {
     this._validateAttached()

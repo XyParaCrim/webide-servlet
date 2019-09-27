@@ -1,4 +1,5 @@
 const http = require('http')
+const utils = require('../../core/utils')
 
 // TODO 重复代码 eureka-dev/decorator.js
 module.exports = {

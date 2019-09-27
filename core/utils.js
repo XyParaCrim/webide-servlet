@@ -27,6 +27,10 @@ module.exports = {
     typeof fn === 'function' && fn.call()
   },
 
+  createArrayAndPush(object, key, item) {
+    (object[key] || (object[key] = Array.of())).push(item)
+  },
+
   createExpiredFunction(deadline, timeout, expire) {
     let called = false
     let expired = false

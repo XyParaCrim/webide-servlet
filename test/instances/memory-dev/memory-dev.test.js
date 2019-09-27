@@ -2,6 +2,8 @@ const WebideServlet = require('../../../index')
 const MemoryServlet = require('../../../packages/servlet/memory/servlet')
 const SocketIoProvider = require('../../../packages/provider-product/socket-io/provider')
 const utils = require('../../../core/utils')
+const objects = require('../../../core/objects')
+const http = require('http')
 
 describe('memory-dev', () => {
   // 测试加载memory-dev
@@ -15,6 +17,7 @@ describe('memory-dev', () => {
         expect(servlet).toBeInstanceOf(MemoryServlet)
         expect(servlet.attached).toBeTruthy()
         expect(servlet.alive).toBeTruthy()
+        expect(servlet.serviceType).toBe(objects.DefaultServiceType)
 
         /* 测试Api */
 
@@ -27,14 +30,21 @@ describe('memory-dev', () => {
         expect(notExistedProvider).toBe(utils.get('poison-provider'))
         expect(notExistedProvider.poison).toBeTruthy()
 
-        let existedProvider = servlet.provide({ "id": "vda", "type": "v2sual" })
+        let metadata = { "id": "v2sual", "type": "v2sual" }
+        let provideOptions = { server: http.createServer() }
+
+        let existedProvider = servlet.provide(metadata, provideOptions)
         expect(existedProvider.poison).toBeFalsy()
         expect(existedProvider).toBeInstanceOf(SocketIoProvider)
 
-        // 测试 provider metadata
-        let metadata = existedProvider.metadata()
-        expect(metadata).not.toBeNull()
-        expect(metadata.url).toBe("http://localhost:9595")
+        let allProductInfo = servlet.allProductInfo()
+
+        expect(allProductInfo.length).toBe(3)
+        expect(allProductInfo[0].metadata).not.toBeNull()
+
+        let productInfoList = servlet.productInfoById('ad')
+        expect(productInfoList).not.toBeNull()
+        expect(productInfoList.length).toBe(1)
 
         existedProvider.close()
       })

@@ -68,8 +68,8 @@ class MemoryServlet extends Servlet {
 
       // set index for query
       const providerIndex = this.providerIndex;
-      (providerIndex.id[id] || (providerIndex.id[id] = Array.of())).push(namespace)
-      (providerIndex.type[type] || (providerIndex.type[type] = Array.of())).push(namespace)
+      utils.createArrayAndPush(providerIndex.id, id, namespace)
+      utils.createArrayAndPush(providerIndex.type, type, namespace)
     }
   }
 

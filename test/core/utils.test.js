@@ -1,19 +1,6 @@
 const utils = require('../../core/utils')
-const path = require('path')
 
 describe('utils', () => {
-
-  test('loadFile - load json file', () => {
-    const loadFile = utils.loadFile
-
-    // 测试test/resources/products.json文件，简单测试数组长度等
-    return loadFile(path.resolve(__dirname, '../resources/products.json'))
-      .then(jsonContent => {
-        expect(jsonContent).not.toBeNull()
-        expect(jsonContent).toBeInstanceOf(Array)
-        expect(jsonContent).toHaveLength(2)
-      })
-  })
 
   test('get and set - store global variable', () => {
 
@@ -34,4 +21,23 @@ describe('utils', () => {
   })
 
 
+  test('unSupportedHandler - for no implement function', () => {
+    expect(utils.unSupportedHandler).toThrowError()
+  })
+
+
+  test('handleIfFunction - convenience call function', () => {
+    let mockFunction = jest.fn(() => { console.log("hh") })
+
+    utils.handleIfFunction(() => mockFunction())
+    utils.handleIfFunction()
+
+    expect(mockFunction.mock.calls.length).toBe(1)
+  })
+
+  test('validate* - type check', () => {
+    expect(() => utils.validateConstructor("", Array, "ErrorType")).toThrowError(TypeError)
+    expect(() => utils.validateNotNull(null, "ErrorType")).toThrowError(TypeError)
+    expect(() => utils.validateString(undefined, "ErrorType")).toThrowError(TypeError)
+  })
 })

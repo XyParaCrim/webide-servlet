@@ -28,7 +28,7 @@ describe('eureka-dev', () => {
 
         let provider = servlet.provide(metadata, options)
 
-        expect(provider.id).toBe(provider.productInfo.providerId)
+        expect(provider.uuid).toBe(provider.productInfo.providerId)
       })
   })
 })
