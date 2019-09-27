@@ -8,8 +8,6 @@ const utils = require('../../core/utils')
 const objects = require('../../core/objects')
 
 module.exports = function (Servlet, options) {
-  options = options || {}
-
   // 检验require选项
   utils.validateConstructor(options, Object, "Invalid options for eureka-dev-servlet: " + options)
 

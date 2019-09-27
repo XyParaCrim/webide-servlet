@@ -1,6 +1,7 @@
 const utils = require('../../core/utils')
 const http = require('http')
 
+// TODO 重复代码 memory-dev/decorator.js
 module.exports = {
   normalizeProviderInfo(eurekaInstanceConfig, eurekaServlet, provideOptions) {
     const metadata = eurekaInstanceConfig.metadata
@@ -8,17 +9,21 @@ module.exports = {
     // validate data
     utils.validateConstructor(provideOptions.server, http.Server, "options缺少server(http.Server)")
 
-    metadata._providerId = utils.generateId()
+    let id = this.idFromMetadata(metadata)
+    let type = this.typeFromMetadata(metadata)
 
+    // 返回provider-info
     return {
-      id: metadata._providerId,
+      uuid: (metadata._providerId = utils.generateId()),
       // socket-io 使用的数据
-      type: metadata.type,
-      port: metadata.port,
+      id,
+      type,
+      port: this.portFromMetadata(metadata),
       server: provideOptions.server,
-      namespace: this.namespaceFromMetadata(metadata),
-
-      metadata: metadata,
+      // detail 使用
+      namespace: utils.normalizeNamespace(type, id),
+      // 适配getter和setter
+      metadata,
 
       productInfo: this.normalizeProductInfo(eurekaInstanceConfig, eurekaServlet),
       instanceConfig: eurekaInstanceConfig
@@ -28,8 +33,9 @@ module.exports = {
   normalizeProductInfo(eurekaInstanceConfig, eurekaServlet) {
     const metadata = eurekaInstanceConfig.metadata
 
+    // 返回product-info
     return {
-      id: utils.generateId(),
+      uuid: utils.generateId(),
       providerId: metadata._providerId,
       url: eurekaInstanceConfig.hostName + ":" + this.portFromMetadata(metadata),
       metadata: metadata

@@ -1,39 +1,30 @@
 const Servlet = require('../../../core/servlet')
 const utils = require('../../../core/utils')
+const objects = require('../../../core/objects')
 const io = require('../../../core/io')
-const path = require('path')
 const logger = require('../../../core/logger')
 const debug = require('debug')('webide-servlet:memory-servlet')
 const defaultDecorator = require('./decorator')
 
-const defaultParser = {
-  path(options) {
-    return path.resolve(options.cwd, options.filename)
-  }
-}
-
 class MemoryServlet extends Servlet {
-  constructor(options, decorator) {
-    super(utils.mergeDecorator(decorator, defaultDecorator))
+  constructor(decorator, options) {
+    super(utils.mergeDecorator(decorator, defaultDecorator), options)
 
-    this.name = "memory-servlet"
+    this.name = this.name || "memory-servlet"
     this.alive = true // always true
-    this.options = options
-    this.providerMap = {}
-    this.providers = []
+    this.providerHash = {}
+    this.providerIndex = { id: {}, type: {} }
   }
 
   /**
    * 默认只是加载本地配置文件
-   * @param afterAttached
+   * @param callback
    */
-  attach (afterAttached) {
+  attach (callback) {
     if (this.attached) {
-      utils.handleIfFunction(afterAttached)
+      utils.handleIfFunction(callback)
     } else {
-      const options = this.options
-
-      let path = defaultParser.path(options)
+      let path = this.path
 
       debug("loading products file(%s)", path)
 
@@ -41,118 +32,161 @@ class MemoryServlet extends Servlet {
 
       io.loadFile(path)
       // 解析数组配置，每一项配置初始化一个product
-        .then(productConfig =>
-          utils.resolveIteratorValues(productConfig).forEach(options => this._addLazyProvider(options))
+        .then(batchMetadata =>
+          utils.resolveIteratorValues(batchMetadata).forEach(this._addLazyProvider.bind(this))
         )
         .catch(error =>
           logger.error(this, `Unable to retrieves products caused by loading file{${path} failed`, error)
         )
         .finally(() =>
-          (this.attached = true) && utils.handleIfFunction(afterAttached)
+          (this.attached = true) && utils.handleIfFunction(callback)
         )
     }
   }
 
   /**
    * 通过product-options创建lazy provider
-   * @param {Object} productOptions
+   * @param {Object} metadata
    * @private
    */
-  _addLazyProvider(productOptions) {
-    const providerDecorator = this.decorator()
-    const providerFactory = this.providerFactory()
-    const providerMap = this.providerMap
+  _addLazyProvider(metadata) {
+    const decorator = this.decorator()
+    const providerHash = this.providerHash
 
-    let namespace = providerDecorator.namespace(productOptions)
-    let provider = providerMap[namespace]
-    if (provider && provider.alive) {
+    let id = decorator.idFromMetadata(metadata)
+    let type = decorator.typeFromMetadata(metadata)
+
+    let namespace = utils.normalizeNamespace(type, id)
+    if (providerHash[namespace] != null) {
       // 首先处理此namespace下已存在的provider
-      // 原则上，如果alive，则旧的优先，反之，则旧的优先
+      // 原则上，旧的优先
       logger.warn(this, `A product{${namespace}} is dropped caused by existed`)
     } else {
-      // un-alive -> replace
-      debug('creating lazy provider(%s)', namespace)
-      logger.info(this, `creating lazy provider(${namespace})`)
+      logger.info(this, `Load a piece of metadata(${namespace})`)
 
-      provider = providerFactory.createLazy(productOptions, this)
+      providerHash[namespace] = { metadata }
 
-      // check 这个返回的provider是否完好无损的，若是poison则drop it, 维持原provider options
-      if (provider.poison) {
-        debug('creating lazy provider(%s) failed', namespace)
-        logger.warn(this, `creating lazy provider(${namespace}) failed`)
-      } else {
-        debug('creating lazy provider(%s) done', namespace)
-        logger.info(this, `creating lazy provider(${namespace}) done`)
-        providerMap[namespace] = provider // TODO
-        this.providers.push(provider)
-      }
+      // set index for query
+      const providerIndex = this.providerIndex;
+      (providerIndex.id[id] || (providerIndex.id[id] = Array.of())).push(namespace)
+      (providerIndex.type[type] || (providerIndex.type[type] = Array.of())).push(namespace)
     }
   }
 
-  supply(filterOptions) {
-    return this.getProvider(filterOptions).supply()
+  /**
+   * lazy product
+   * @see Servlet.prototype.supply
+   */
+  supply(type, id) {
+    let productInfo = this.productInfo(type, id)
+
+    return productInfo ? this.providerFactory().createProduct(productInfo) : null
   }
 
-  metadata(filterOptions) {
-    return this.getProvider(filterOptions).metadata()
+  /**
+   * @see Servlet.prototype.supplyAll
+   */
+  supplyAll() {
+    return this.allProductInfo().map(info => this.providerFactory().createProduct(info))
   }
 
-  getProductInfo(type) {
-    // 返回所有metadata
-    if (arguments.length === 0) {
-      return this.providers.map(product => product.productInfo())
+  /**
+   * @see Servlet.prototype.supplyById
+   */
+  supplyById(id) {
+    return this.productInfoById(id).map(info => this.providerFactory().createProduct(info))
+  }
+
+  /**
+   * @see Servlet.prototype.supplyByType
+   */
+  supplyByType(type) {
+    return this.productInfoByType(type).map(info => this.providerFactory().createProduct(info))
+  }
+
+  /**
+   * @Nullable
+   * @see Servlet.prototype.productInfo
+   */
+  productInfo(type, id) {
+    let productInfo = null
+    if (type != null && id != null) {
+      let namespace = utils.normalizeNamespace(type, id)
+
+      productInfo = this._normalizeProductInfoIfNull(this.providerHash[namespace])
     }
+
+    return productInfo
   }
 
-  // TODO 严重
-  getProvider(filterOptions) {
-    if (typeof filterOptions === 'object') {
-      const providerMap = this.providerMap
-      const providerDecorator = this.decorator()
+  /**
+   * @see Servlet.prototype.allProductInfo
+   */
+  allProductInfo() {
+    return Object.values(this.providerHash).map(this._normalizeProductInfoIfNull.bind(this))
+  }
 
-      let provider, namespace
+  /**
+   * @see Servlet.prototype.productInfoById
+   */
+  productInfoById(id) {
+    let hits = this.providerIndex.id[id]
 
-      provider = providerMap[namespace = providerDecorator.namespace(filterOptions)] || utils.get('poison-provider')
+    return hits
+      ? hits.map(namespace => this._normalizeProductInfoIfNull(this.providerHash[namespace]))
+      : objects.EmptyArray
+  }
 
-      provider.poison && logger.error(this, `Unable to query{${namespace}} provider with no-matched options`)
+  /**
+   * @see Servlet.prototype.productInfoByType
+   */
+  productInfoByType(type) {
+    let hits = this.providerIndex.type[type]
 
-      return provider
-    } else {
-      for (let provider of this.providers) {
-        // TODO
-        if (provider.options.id === filterOptions) {
-          return provider
-        }
-      }
-    }
+    return hits
+      ? hits.map(namespace => this._normalizeProductInfoIfNull(this.providerHash[namespace]))
+      : objects.EmptyArray
+  }
 
-    logger.error(this, "Unable to find a matched provider, and return poison-provider" , TypeError(filterOptions))
-
-    return utils.get('poison-provider')
+  _normalizeProductInfoIfNull(providerItem) {
+    return providerItem
+      ? (providerItem.productInfo ||
+          (providerItem.productInfo = this.decorator().normalizeProductInfo(providerItem.metadata, this)))
+      // 说明加载metadata文件，没有此product
+      : null
   }
 
   /**
    * for this implement, 可以获取的providers在{@see _attach}加载本地就已经决定了，
    * 不存在动态添加新的provider
-   * @param options
-   * @returns {Servlet.Provider} 尝试返回一个attached的provider
+   * @see Servlet.prototype.provide
+   * @returns {Provider} 尝试返回一个attached的provider
    */
-  provide(options) {
-    const providerMap = this.providerMap
-    const providerDecorator = this.decorator()
+  provide(metadata, options) {
+    // 输入的metadata不是实际provide的，实际的metadata已经通过文件加载
+    // metadata以实际的文件内容为准
+    // 这里输入的metadata，仅仅用于query
+    // 特别地，如果provider已经存在，输入的options就会不用到
+    let id = this.decorator().idFromMetadata(metadata)
+    let type = this.decorator().typeFromMetadata(metadata)
+    let namespace = utils.normalizeNamespace(id, type)
 
-    let namespace = providerDecorator.namespace(options)
-    let provider = providerMap[namespace] || utils.get('poison-provider')
+    let provider = utils.get('poison-provider')
+    let providerItem = this.providerHash[namespace]
 
     // 首先，检查这个namespace的provider实例是否可用
-    // 其次，检查attached，若未attach，则尝试attach
-    if (!provider.poison && !provider.attached) {
-      // memory-servlet默认只支持初始化加载的product option
-      // try to attach
-      try {
-        provider.attach()
-      } catch (e) {
-        logger.error(this, `Unable to attach the provider{${namespace}}`, e)
+    if (providerItem) {
+      provider = this._createLazyIfNull(providerItem, options)
+
+      // 其次，检查attached，若未attach，则尝试attach
+      if (!provider.poison && !provider.attached) {
+        // memory-servlet默认只支持初始化加载的product option
+        // try to attach
+        try {
+          provider.attach()
+        } catch (e) {
+          logger.error(this, `Unable to attach the provider{${namespace}}`, e)
+        }
       }
     } else if (provider.poison) {
       logger.error(this, `Unable to provide a service{${namespace}}`, TypeError("输入正确的id和type"))
@@ -163,10 +197,27 @@ class MemoryServlet extends Servlet {
     return provider
   }
 
-  autoUpdateProductInfo() {}
+  /**
+   * @see Servlet.prototype.autoUpdateProductInfo
+   */
+  autoUpdateProductInfo() { /* do nothing */ }
 
+  /**
+   * @see Servlet.prototype.detail
+   */
   detail() {
     return `${this.name}{ alive: ${this.alive}, attached: ${this.attached} }`
+  }
+
+  _createLazyIfNull(providerItem, provideOptions) {
+    if (providerItem) {
+      return providerItem.provider ||
+        (providerItem.provider = this.providerFactory()
+          // 创建provider需要两个参数：providerInfo 和 servlet
+          .createLazy(this.decorator().normalizeProviderInfo(providerItem.metadata, this, provideOptions), this))
+    }
+
+    return null
   }
 }
 

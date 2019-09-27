@@ -39,7 +39,7 @@ module.exports = {
           io.checkFile(providerClassDir, 'provider', 'js')
         ]).then(([servletPath, providerPath]) => {
           // 创建一个servlet实例
-          let servlet = createServlet(require(servletPath), options)
+          let servlet = createServlet(require(servletPath), options || {})
           if (!servlet instanceof Servlet) {
             throw Error(`Failed to create the servlet{ ${servletName}: ${servletPath} }`)
           }

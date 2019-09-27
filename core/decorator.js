@@ -1,3 +1,7 @@
+/**
+ * 简单规定metadata一共以下这几个
+ */
+
 module.exports = {
   idFromMetadata(metadata) {
     return metadata.id
@@ -11,11 +15,7 @@ module.exports = {
     return metadata.port
   },
 
-  namespaceFromMetadata(metadata) {
-    return this.idFromMetadata(metadata) + '#' + this.typeFromMetadata(metadata)
-  },
-
-  metadataFromProductInfo(productInfo) {
-    return productInfo.metadata
+  hostFromMetadata(metadata) {
+    return metadata.host
   }
 }

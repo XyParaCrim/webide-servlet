@@ -36,19 +36,37 @@ class Servlet {
 
   /**
    * 根据提供的筛选条件，返回结果，且结果非空({Servlet.Provider}的委托函数)
-   * @param filterOptions
+   * @param type
+   * @param id
    * @returns {Product}
    */
-  supply(filterOptions) {
+  supply(type, id) {
     utils.unSupportedHandler()
   }
 
   /**
-   * 如果提供type则筛选，反之，则返回所有的products
-   * @param type
-   * @returns {Array<Product>}
+   * @returns {Array<Provider>}
    */
-  supplies(type) {
+  supplyAll() {
+    utils.unSupportedHandler()
+  }
+
+  /**
+   * 根据type筛选
+   * @param type
+   * @return {Array<Provider>}
+   */
+  supplyByType(type) {
+    utils.unSupportedHandler()
+  }
+
+
+  /**
+   * 根据id筛选
+   * @param id
+   * @return {Array<Provider>}
+   */
+  supplyById(id) {
     utils.unSupportedHandler()
   }
 
@@ -78,14 +96,39 @@ class Servlet {
   }
 
   /**
-   * 返回已注册的product数据数组
+   * 返回已注册的product唯一数据
    * @param type
-   * @return {Array<JSON>}
+   * @param id
+   * @return {JSON}
    */
-  productInfo(type) {
+  productInfo(type, id) {
     utils.unSupportedHandler()
   }
 
+  /**
+   * 根据type返回所有type的info
+   * @param type
+   * @return {Array<JSON>}
+   */
+  productInfoByType(type) {
+    utils.unSupportedHandler()
+  }
+
+  /**
+   * 根据id返回所有type的info
+   * @param id
+   * @return {Array<JSON>}
+   */
+  productInfoById(id) {
+    utils.unSupportedHandler()
+  }
+
+  /**
+   * @return {Array<JSON>}
+   */
+  allProductInfo() {
+    utils.unSupportedHandler()
+  }
 
   providerFactory(factory) {
     if (arguments.length > 0) {

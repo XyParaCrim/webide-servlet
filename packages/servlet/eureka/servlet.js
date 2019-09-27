@@ -108,53 +108,105 @@ class EurekaServlet extends Servlet {
     }
   }
 
-  supply(id) {
-    utils.unSupportedHandler()
+  /**
+   * @see Servlet.prototype.supply
+   */
+  supply(type, id) {
+    let productInfo = this.productInfo(type, id)
 
-    this._validateAttached()
-
-    const decorator = this.decorator()
-    const productInfo = this.client.getInstancesByAppId(id)
-    if (productInfo.length === 0) {
-      logger.error(this, `没有找到项目: ${id}`)
-      return utils.get('poison-provider')
-    }
-
-    if (productInfo.length > 1) {
-      logger.warn(this, `有${productInfo.length}个相同Id的项目，返回第一个: ${id}`)
-    }
-
-    return this.providerFactory()
-      .createProduct(decorator.normalizeProductInfo(productInfo[0], this))
+    return productInfo ? this.providerFactory().createProduct(productInfo) : null
   }
 
+  /**
+   * @see Servlet.prototype.supplyAll
+   */
+  supplyAll() {
+    return this.allProductInfo().map(info => this.providerFactory().createProduct(info))
+  }
+
+  /**
+   * @see Servlet.prototype.supplyByType
+   */
+  supplyByType(type) {
+    return this.productInfoByType(type).map(info => this.providerFactory().createProduct(info))
+  }
+
+  /**
+   * @see Servlet.prototype.supplyById
+   */
+  supplyById(id) {
+    return this.productInfoById(id).map(info => this.providerFactory().createProduct(info))
+  }
+
+  /**
+   * Servlet.prototype.detail
+   */
   detail() {
     return `${this.name}{ alive: ${this.alive}, attached: ${this.attached} }`
   }
 
-  productInfo(productType) {
+  /**
+   * @see Servlet.prototype.productInfo
+   */
+  productInfo(type, id) {
     this._validateAttached()
 
-    let cache = this.client.cache.app
-    let instancesConfig = []
-    let match = () => true
-    let prefix = productType + "-"
+    let namespace = utils.normalizeNamespace(type, id)
+    let instancesConfig = this.client.getInstancesByAppId(namespace)
 
-    // 根据productType筛选，不是serviceType
-    if (typeof type === "string") {
-      match = name => name.startsWith(prefix)
+    if (instancesConfig.length > 1) {
+      logger.warn(this, `${instancesConfig.length} same namespace(${namespace}) products exist, and return first`)
     }
 
-    for(let [name, instances] of Object.entries(cache)) {
+    // 如果存在多个相同则返回第一个
+    return instancesConfig[0] ? this.decorator().normalizeProductInfo(instancesConfig[0], this) : null
+  }
+
+  /**
+   * @see Servlet.prototype.allProductInfo
+   */
+  allProductInfo() {
+    let serviceType = this.serviceType
+    let instancesConfig = this.client.getInstancesByVipAddress(serviceType)
+
+    return instancesConfig.map(instanceConfig => this.decorator().normalizeProductInfo(instanceConfig, this))
+  }
+
+  /**
+   * @see Servlet.prototype.productInfoById
+   */
+  productInfoById(id) {
+    let suffix =  "-" + id.toUpperCase()
+
+    return this._iterateAppsMatchBy(name => name.endsWith(suffix))
+  }
+
+  /**
+   * @see Servlet.prototype.productInfoByType
+   */
+  productInfoByType(type) {
+    let prefix =  type.toUpperCase() + "-"
+
+    return this._iterateAppsMatchBy(name => name.startsWith(prefix))
+  }
+
+  _iterateAppsMatchBy(match) {
+    let cache = this.client.cache.app
+    let instancesConfig = []
+
+    for (let [name, instances] of Object.entries(cache)) {
       if (instances && instances.length && match(name)) {
         instancesConfig.push.apply(instancesConfig, instances)
       }
     }
 
-    const decorator = this.decorator()
-    return instancesConfig.map(decorator.normalizeProductInfo.bind(decorator))
+    return instancesConfig.map(instanceConfig => this.decorator().normalizeProductInfo(instanceConfig, this))
+
   }
 
+  /**
+   * @see Servlet.prototype.autoUpdateProductInfo
+   */
   autoUpdateProductInfo() {
     this._validateAttached()
 

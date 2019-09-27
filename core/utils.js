@@ -58,6 +58,10 @@ module.exports = {
     return decorator ? Object.assign({}, defaultDecorator, decorator) : Object.assign({}, defaultDecorator)
   },
 
+  normalizeNamespace(type, id) {
+    return type + '#' + id
+  },
+
   /* some validate function */
 
   validateConstructor(value, Constructor, message) {
