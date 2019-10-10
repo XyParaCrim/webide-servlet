@@ -42,7 +42,7 @@ class SocketIoProvider extends Provider {
 
   constructor (providerInfo, servlet) {
     super(providerInfo, servlet)
-    this.name = "memory-provider"
+    this.name = "socket.io-provider"
     this.alive = true // always true
     this.poison = false
     this._setUp()
