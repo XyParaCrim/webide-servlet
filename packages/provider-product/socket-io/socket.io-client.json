@@ -1,3 +1,5 @@
 {
-  "reconnectionAttempts": 10
+  "path": "/socket.io",
+  "reconnectionAttempts": 10,
+  "transports": ["websocket"]
 }

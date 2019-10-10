@@ -20,8 +20,8 @@ module.exports = {
 
     // 拼装eureka-client config
     eurekaInstanceConfig.metadata = metadata
-    eurekaInstanceConfig.app = `${type}-${id}`
-    eurekaInstanceConfig.vipAddress = eurekaServlet.serviceType || objects.DefaultServiceType
+    eurekaInstanceConfig.app = eurekaServlet.serviceType || objects.DefaultServiceType
+    eurekaInstanceConfig.vipAddress = `${type}-${id}`
     eurekaInstanceConfig.hostName = eurekaServlet.hostName || host
     eurekaInstanceConfig.ipAddr = eurekaServlet.ipAddr || host
     eurekaInstanceConfig.port = { '$': port, '@enabled': true }

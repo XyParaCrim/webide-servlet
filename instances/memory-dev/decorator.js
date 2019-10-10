@@ -38,6 +38,7 @@ module.exports = {
 
     return {
       uuid: utils.generateId(),
+      type: this.typeFromMetadata(metadata),
       providerId: metadata._providerId,
       url: this.hostFromMetadata(metadata) + ":" + this.portFromMetadata(metadata),
       metadata

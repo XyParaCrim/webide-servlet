@@ -153,7 +153,7 @@ class EurekaServlet extends Servlet {
     this._validateAttached()
 
     let namespace = utils.normalizeNamespace(type, id)
-    let instancesConfig = this.client.getInstancesByAppId(namespace)
+    let instancesConfig = this.client.getInstancesByVipAddress(namespace)
 
     if (instancesConfig.length > 1) {
       logger.warn(this, `${instancesConfig.length} same namespace(${namespace}) products exist, and return first`)
@@ -168,7 +168,7 @@ class EurekaServlet extends Servlet {
    */
   allProductInfo() {
     let serviceType = this.serviceType
-    let instancesConfig = this.client.getInstancesByVipAddress(serviceType)
+    let instancesConfig = this.client.getInstancesByAppId(serviceType)
 
     return instancesConfig.map(instanceConfig => this.decorator().normalizeProductInfo(instanceConfig, this))
   }
@@ -177,7 +177,7 @@ class EurekaServlet extends Servlet {
    * @see Servlet.prototype.productInfoById
    */
   productInfoById(id) {
-    let suffix =  "-" + id.toUpperCase()
+    let suffix =  "-" + id
 
     return this._iterateAppsMatchBy(name => name.endsWith(suffix))
   }
@@ -186,13 +186,13 @@ class EurekaServlet extends Servlet {
    * @see Servlet.prototype.productInfoByType
    */
   productInfoByType(type) {
-    let prefix =  type.toUpperCase() + "-"
+    let prefix =  type + "-"
 
     return this._iterateAppsMatchBy(name => name.startsWith(prefix))
   }
 
   _iterateAppsMatchBy(match) {
-    let cache = this.client.cache.app
+    let cache = this.client.cache.vip
     let instancesConfig = []
 
     for (let [name, instances] of Object.entries(cache)) {

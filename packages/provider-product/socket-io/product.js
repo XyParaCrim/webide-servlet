@@ -9,7 +9,9 @@ const events = new Set([
   'before_emit',
   'after_emit',
   'req_success',
-  'req_error'
+  'req_error',
+  'req_timeout',
+  'req_unknown'
 ])
 
 const DEFAULT_OPTIONS = {
@@ -61,9 +63,13 @@ class SocketIoProduct extends Product {
       }
     } else {
       // 创建socket-io客户端
-      this.client = io(this.url, socketOptions)
+      this.client = this._createClient()
       this.client.once('connect', () => utils.handleIfFunction(callback))
     }
+  }
+
+  _createClient() {
+    return io(this.url, Object.assign({}, socketOptions, { path: this.path + socketOptions.path }))
   }
 
   emit(event, data, options) {
@@ -76,7 +82,7 @@ class SocketIoProduct extends Product {
     // 这里是发送事件
     if (this.attached) {
       let emitOptions = this._normalizeOptions(options)
-      let requestData = this.__normalizeReqData(event, data, emitOptions)
+      let requestData = this._normalizeReqData(event, data, emitOptions)
 
       this.emit('before_emit', event, emitOptions)
 
@@ -101,7 +107,7 @@ class SocketIoProduct extends Product {
     return options
   }
 
-  __normalizeReqData(event, data, options) {
+  _normalizeReqData(event, data, options) {
     return {
       id: utils.generateId(),
       data: data || {},
@@ -128,8 +134,11 @@ class SocketIoProduct extends Product {
             reject(response)
             this.emit('req_error', event, response)
           } else {
-            console.error(`dont support response state : ${response.state},eventId : ${event}`)
+            console.error(`dont support response state : ${response.state}, eventId : ${event}`)
+            this.emit('req_unknown', event, response)
           }
+
+          this.emit('after_emit', event, response)
         },
 
         // timeout后，若上面的函数没有调用，则触发
@@ -138,6 +147,7 @@ class SocketIoProduct extends Product {
 
           reject(response)
           this.emit('req_error', event, response)
+          this.emit('req_timeout', event)
           this.emit('after_emit', event, response)
         },
 
@@ -152,8 +162,10 @@ class SocketIoProduct extends Product {
   }
 
   on(event) {
-    if (this.attacted) {
-      events.has(event) ? super.on.apply(this, arguments) : this.client.on.apply(this.client, arguments)
+    if (events.has(event)) {
+      super.on.apply(this, arguments)
+    } else if (this.attacted) {
+      this.client.on.apply(this.client, arguments)
     }
   }
 }
