@@ -58,8 +58,8 @@ module.exports = {
     }
   },
 
-  mergeDecorator(decorator, defaultDecorator) {
-    return decorator ? Object.assign({}, defaultDecorator, decorator) : Object.assign({}, defaultDecorator)
+  mergeAdapter(adapter, defaultAdapter) {
+    return adapter ? Object.assign({}, defaultAdapter, adapter) : Object.assign({}, defaultAdapter)
   },
 
   normalizeNamespace(type, id) {

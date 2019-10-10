@@ -1,7 +1,7 @@
 const utils = require('../../core/utils')
 const http = require('http')
 
-// TODO 重复代码 memory-dev/decorator.js
+// TODO 重复代码 memory-dev/adapter.js
 module.exports = {
   normalizeProviderInfo(eurekaInstanceConfig, eurekaServlet, provideOptions) {
     const metadata = eurekaInstanceConfig.metadata

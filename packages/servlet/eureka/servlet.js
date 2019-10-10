@@ -4,7 +4,7 @@ const logger = require('../../../core/logger')
 
 const Servlet = require('../../../core/servlet')
 const Eureka = require('eureka-js-client').Eureka
-const defaultDecorator = require('./decorator')
+const defaultAdapter = require('./adapter')
 
 /**
  * Eureka implement
@@ -16,10 +16,10 @@ class EurekaServlet extends Servlet {
   /**
    * eureka-js-client options
    * @param options
-   * @param decorator
+   * @param adapter
    */
-  constructor(decorator, options) {
-    super(utils.mergeDecorator(decorator, defaultDecorator), options)
+  constructor(adapter, options) {
+    super(utils.mergeAdapter(adapter, defaultAdapter), options)
 
     this.name = this.name || 'eureka-servlet'
     this.alive = true
@@ -68,16 +68,16 @@ class EurekaServlet extends Servlet {
     this._validateAttached()
 
     const client = this.client
-    const decorator = this.decorator()
+    const adapter = this.adapter()
     const providerFactory = this.providerFactory()
     const eurekaInstanceConfig = client.config.instance
 
     if (!this.provider) {
-      decorator.normalizeEurekaInstanceConfig(metadata, eurekaInstanceConfig, this)
+      adapter.normalizeEurekaInstanceConfig(metadata, eurekaInstanceConfig, this)
 
       // 创建一个un-attach的provider对象
         this.provider = providerFactory
-          .createLazy(decorator.normalizeProviderInfo(eurekaInstanceConfig, this, options))
+          .createLazy(adapter.normalizeProviderInfo(eurekaInstanceConfig, this, options))
     }
 
     if (!this.provider.attached) {
@@ -160,7 +160,7 @@ class EurekaServlet extends Servlet {
     }
 
     // 如果存在多个相同则返回第一个
-    return instancesConfig[0] ? this.decorator().normalizeProductInfo(instancesConfig[0], this) : null
+    return instancesConfig[0] ? this.adapter().normalizeProductInfo(instancesConfig[0], this) : null
   }
 
   /**
@@ -170,7 +170,7 @@ class EurekaServlet extends Servlet {
     let serviceType = this.serviceType
     let instancesConfig = this.client.getInstancesByAppId(serviceType)
 
-    return instancesConfig.map(instanceConfig => this.decorator().normalizeProductInfo(instanceConfig, this))
+    return instancesConfig.map(instanceConfig => this.adapter().normalizeProductInfo(instanceConfig, this))
   }
 
   /**
@@ -201,7 +201,7 @@ class EurekaServlet extends Servlet {
       }
     }
 
-    return instancesConfig.map(instanceConfig => this.decorator().normalizeProductInfo(instanceConfig, this))
+    return instancesConfig.map(instanceConfig => this.adapter().normalizeProductInfo(instanceConfig, this))
 
   }
 

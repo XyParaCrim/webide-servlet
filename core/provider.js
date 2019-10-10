@@ -20,7 +20,7 @@ class Provider extends EventEmitter {
     this.poison = true // 子类需要自己声明自己是否可用，默认不可用
     this.attached = false
     if ((this.servlet = servlet)) {
-      this.decorator = servlet.decorator()
+      this.adapter = servlet.adapter()
     }
     if (providerInfo) {
       utils.bindProperties(this, providerInfo)

@@ -4,18 +4,18 @@
  */
 const utils = require('./utils')
 const Provider = require('./provider')
-const defaultDecorator = require('./decorator')
+const defaultAdapter = require('./adapter')
 
 class Servlet {
-  constructor (decorator, options) {
-    if (!decorator) {
-      throw TypeError("缺少参数-decorator")
+  constructor (adapter, options) {
+    if (!adapter) {
+      throw TypeError("缺少参数-adapter")
     }
 
     this.alive = false
     this.attached = false
     this.factory = Provider
-    this.decoratorObject = utils.mergeDecorator(decorator, defaultDecorator)
+    this.adapterObject = utils.mergeAdapter(adapter, defaultAdapter)
     utils.bindProperties(this, options)
   }
 
@@ -149,8 +149,8 @@ class Servlet {
    * 用于传入到不同实现的provider里(暂时:最简单的实现就是仅仅对option的解析)
    * @return {Object}
    */
-  decorator() {
-    return this.decoratorObject
+  adapter() {
+    return this.adapterObject
   }
 }
 

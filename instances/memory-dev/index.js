@@ -1,4 +1,4 @@
-const decorator = require('./decorator')
+const adapter = require('./adapter')
 const path = require('path')
 const utils = require('../../core/utils')
 const objects = require('../../core/objects')
@@ -15,5 +15,5 @@ module.exports = function (Servlet, options) {
 
   utils.validateString(options.path, "缺少文件路径(options.path or options.cwd + options.filename)")
 
-  return new Servlet(decorator, options)
+  return new Servlet(adapter, options)
 }

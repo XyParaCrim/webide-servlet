@@ -4,11 +4,11 @@ const objects = require('../../../core/objects')
 const io = require('../../../core/io')
 const logger = require('../../../core/logger')
 const debug = require('debug')('webide-servlet:memory-servlet')
-const defaultDecorator = require('./decorator')
+const defaultAdapter = require('./adapter')
 
 class MemoryServlet extends Servlet {
-  constructor(decorator, options) {
-    super(utils.mergeDecorator(decorator, defaultDecorator), options)
+  constructor(adapter, options) {
+    super(utils.mergeAdapter(adapter, defaultAdapter), options)
 
     this.name = this.name || "memory-servlet"
     this.alive = true // always true
@@ -50,11 +50,11 @@ class MemoryServlet extends Servlet {
    * @private
    */
   _addLazyProvider(metadata) {
-    const decorator = this.decorator()
+    const adapter = this.adapter()
     const providerHash = this.providerHash
 
-    let id = decorator.idFromMetadata(metadata)
-    let type = decorator.typeFromMetadata(metadata)
+    let id = adapter.idFromMetadata(metadata)
+    let type = adapter.typeFromMetadata(metadata)
 
     let namespace = utils.normalizeNamespace(type, id)
     if (providerHash[namespace] != null) {
@@ -151,7 +151,7 @@ class MemoryServlet extends Servlet {
   _normalizeProductInfoIfNull(providerItem) {
     return providerItem
       ? (providerItem.productInfo ||
-          (providerItem.productInfo = this.decorator().normalizeProductInfo(providerItem.metadata, this)))
+          (providerItem.productInfo = this.adapter().normalizeProductInfo(providerItem.metadata, this)))
       // 说明加载metadata文件，没有此product
       : null
   }
@@ -167,8 +167,8 @@ class MemoryServlet extends Servlet {
     // metadata以实际的文件内容为准
     // 这里输入的metadata，仅仅用于query
     // 特别地，如果provider已经存在，输入的options就会不用到
-    let id = this.decorator().idFromMetadata(metadata)
-    let type = this.decorator().typeFromMetadata(metadata)
+    let id = this.adapter().idFromMetadata(metadata)
+    let type = this.adapter().typeFromMetadata(metadata)
     let namespace = utils.normalizeNamespace(id, type)
 
     let provider = utils.get('poison-provider')
@@ -214,7 +214,7 @@ class MemoryServlet extends Servlet {
       return providerItem.provider ||
         (providerItem.provider = this.providerFactory()
           // 创建provider需要两个参数：providerInfo 和 servlet
-          .createLazy(this.decorator().normalizeProviderInfo(providerItem.metadata, this, provideOptions), this))
+          .createLazy(this.adapter().normalizeProviderInfo(providerItem.metadata, this, provideOptions), this))
     }
 
     return null

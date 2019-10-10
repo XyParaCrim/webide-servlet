@@ -3,7 +3,7 @@
  * 2.默认不自动注册到eureka（registerWithEureka = false）
  * 3.默认不自动拉去注册信息（fetchRegistry = false）
  */
-const decorator = require('./decorator')
+const adapter = require('./adapter')
 const utils = require('../../core/utils')
 const objects = require('../../core/objects')
 
@@ -18,5 +18,5 @@ module.exports = function (Servlet, options) {
   options.eurekaOptions.cwd = options.eurekaOptions.cwd || __dirname
   options.eurekaLoggerLevel = options.eurekaLoggerLevel || 'debug'
 
-  return new Servlet(decorator, options)
+  return new Servlet(adapter, options)
 }
