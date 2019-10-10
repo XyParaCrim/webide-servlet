@@ -35,12 +35,13 @@ module.exports = {
 
     // 返回product-info
     return {
+      pid: eurekaInstanceConfig.vipAddress,
       uuid: utils.generateId(),
       type: this.typeFromMetadata(metadata),
       providerId: metadata._providerId,
       path: `/service/${metadata.type}/${metadata.id}`,
       url: eurekaInstanceConfig.hostName + ":" + 9530,
-      metadata: metadata
+      metadata
     }
   }
 }

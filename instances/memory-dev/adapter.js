@@ -37,9 +37,12 @@ module.exports = {
     utils.validateNotNull(metadata.port, "metadata缺少post")
 
     return {
+      pid: metadata.id,
       uuid: utils.generateId(),
       type: this.typeFromMetadata(metadata),
       providerId: metadata._providerId,
+      // 不需要从请求路径获取serviceId
+      path: "",
       url: this.hostFromMetadata(metadata) + ":" + this.portFromMetadata(metadata),
       metadata
     }
