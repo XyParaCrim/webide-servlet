@@ -1,5 +1,7 @@
 # webide-servlet
 
+[![codebeat badge](https://codebeat.co/badges/776c4415-b154-45f7-9e30-45cf8c2f24f9)](https://codebeat.co/projects/github-com-xyparacrim-webide-servlet-master)
+
 ## Features
 
 Services Implement:
